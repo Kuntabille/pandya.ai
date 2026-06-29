@@ -1,0 +1,36 @@
+{
+  "name": "sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "node scripts/bundle-docs.js",
+    "build": "tsup src/cli.ts --format cjs --dts",
+    "start": "node dist/cli.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "adm-zip": "^0.5.17",
+    "axios": "^1.18.0",
+    "commander": "^15.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.3",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  },
+  "bin": {
+    "pandya": "./dist/cli.js"
+  }
+}

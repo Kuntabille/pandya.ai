@@ -1,0 +1,15 @@
+{
+  "name": "My New Game",
+  "version": "1.0",
+  "board": {
+    "type": 1,
+    "width": 8,
+    "height": 8
+  },
+  "pieces": [],
+  "players": {
+    "min_players": 2,
+    "max_players": 2,
+    "turn_order": 1
+  }
+}
