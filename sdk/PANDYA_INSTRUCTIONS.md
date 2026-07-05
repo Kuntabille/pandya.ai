@@ -10,6 +10,8 @@ You have access to MCP tools to assist the user:
 - `get_lua_libraries`: Returns available Lua hooks.
 - `get_ui_components`: Returns available React primitives.
 - `get_authoring_guidelines`: Retrieves the comprehensive system prompts for generating the Canvas JSON, Lua Logic, and React UI.
+- `scaffold_game`: Scaffolds a new pandya.ai game in the specified directory.
+- `update_game`: Updates an existing pandya.ai game's local files in the specified directory.
 
 ## Workflow
 1. Call `get_authoring_guidelines` to fetch the rules for whichever component you are generating (CANVAS_AGENT_PROMPT, LOGIC_AGENT_PROMPT or UI_AGENT_PROMPT).
