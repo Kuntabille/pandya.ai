@@ -14,7 +14,7 @@ Gemini natively supports Git-based plugins. You can install this plugin directly
 
 ```bash
 # Clone this repository into your Gemini config
-git clone https://github.com/Kuntabille/pandya-community.git ~/.gemini/config/plugins/pandya
+git clone https://github.com/Kuntabille/pandya.ai.git ~/.gemini/config/plugins/pandya
 ```
 *Restart Gemini/Antigravity after running this command. The plugin will be automatically loaded, exposing the `pandya-authoring` skill and the Pandya MCP tools.*
 

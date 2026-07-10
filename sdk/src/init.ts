@@ -61,7 +61,14 @@ export default function CustomGameBoard({ gameState, onMove }: any) {
   "pieces": [],
   "rules": [],
   "actions": [],
-  "phases": []
+  "phases": [],
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "The base game rules without any variations applied."
+    }
+  ]
 }
 `;
 
