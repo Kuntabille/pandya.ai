@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { login } from './auth';
-import { initGame } from './init';
-import { pushGame } from './push';
-import { packageGame, uploadGame } from './package';
-
 
 const program = new Command();
 
@@ -19,6 +14,7 @@ program
   .description('Login to pandya.ai (or a local instance) via OAuth')
   .option('-h, --host <url>', 'The pandya instance URL', 'https://pandya.ai')
   .action(async (options) => {
+    const { login } = await import('./auth');
     await login(options.host);
   });
 
@@ -27,6 +23,7 @@ program
   .description('Scaffold a new game in the current directory')
   .argument('[directory]', 'Directory to initialize (defaults to current)', '.')
   .action(async (directory) => {
+    const { initGame } = await import('./init');
     await initGame(directory);
   });
 
@@ -36,6 +33,7 @@ program
   .argument('<gameId>', 'The ID of the game to push assets to')
   .option('-h, --host <url>', 'The pandya instance URL', 'https://pandya.ai')
   .action(async (gameId, options) => {
+    const { pushGame } = await import('./push');
     await pushGame(gameId, options.host);
   });
 
@@ -44,7 +42,8 @@ program
   .description('Package a game directory into a .pgame archive')
   .argument('[directory]', 'Directory containing the game files', '.')
   .option('-o, --out <filename>', 'Output filename (e.g. game.pgame)')
-  .action((directory, options) => {
+  .action(async (directory, options) => {
+    const { packageGame } = await import('./package');
     packageGame(directory, options.out);
   });
 
@@ -54,9 +53,8 @@ program
   .argument('<package>', 'Path to the .pgame file')
   .option('-h, --host <url>', 'The pandya instance URL', 'https://pandya.ai')
   .action(async (pkg, options) => {
+    const { uploadGame } = await import('./package');
     await uploadGame(pkg, options.host);
   });
-
-
 
 program.parse();
