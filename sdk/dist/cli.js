@@ -6,6 +6,13 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -23,15 +30,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// src/cli.ts
-var import_commander = require("commander");
-
 // src/auth.ts
-var import_express = __toESM(require("express"));
-var import_open = __toESM(require("open"));
-var import_fs = __toESM(require("fs"));
-var import_path = __toESM(require("path"));
-var TOKEN_PATH = import_path.default.join(process.cwd(), ".pandya-token");
+var auth_exports = {};
+__export(auth_exports, {
+  getToken: () => getToken,
+  login: () => login
+});
 async function login(host) {
   return new Promise((resolve, reject) => {
     const app = (0, import_express.default)();
@@ -68,10 +72,23 @@ function getToken() {
   }
   return null;
 }
+var import_express, import_open, import_fs, import_path, TOKEN_PATH;
+var init_auth = __esm({
+  "src/auth.ts"() {
+    "use strict";
+    import_express = __toESM(require("express"));
+    import_open = __toESM(require("open"));
+    import_fs = __toESM(require("fs"));
+    import_path = __toESM(require("path"));
+    TOKEN_PATH = import_path.default.join(process.cwd(), ".pandya-token");
+  }
+});
 
 // src/init.ts
-var import_fs2 = __toESM(require("fs"));
-var import_path2 = __toESM(require("path"));
+var init_exports = {};
+__export(init_exports, {
+  initGame: () => initGame
+});
 async function initGame(targetDir) {
   const dirPath = import_path2.default.resolve(process.cwd(), targetDir);
   if (!import_fs2.default.existsSync(dirPath)) {
@@ -128,7 +145,14 @@ export default function CustomGameBoard({ gameState, onMove }: any) {
   "pieces": [],
   "rules": [],
   "actions": [],
-  "phases": []
+  "phases": [],
+  "variations": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "The base game rules without any variations applied."
+    }
+  ]
 }
 `;
   import_fs2.default.writeFileSync(import_path2.default.join(dirPath, "logic.lua"), logicContent, "utf-8");
@@ -137,11 +161,44 @@ export default function CustomGameBoard({ gameState, onMove }: any) {
   console.log(`Successfully initialized game assets in ${dirPath}`);
   console.log("Created: logic.lua, component.tsx, canvas.json");
 }
+var import_fs2, import_path2;
+var init_init = __esm({
+  "src/init.ts"() {
+    "use strict";
+    import_fs2 = __toESM(require("fs"));
+    import_path2 = __toESM(require("path"));
+  }
+});
 
 // src/push.ts
-var import_fs3 = __toESM(require("fs"));
-var import_path3 = __toESM(require("path"));
-var import_axios = __toESM(require("axios"));
+var push_exports = {};
+__export(push_exports, {
+  createGame: () => createGame,
+  pushGame: () => pushGame,
+  updateGame: () => updateGame
+});
+async function createGame(name, host) {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated. Please run "pandya login" first.');
+  }
+  const url = `${host}/gameauthor.GameAuthorService/CreateGameDefinition`;
+  const payload = {
+    name,
+    description: "Generated via Antigravity CLI"
+  };
+  const res = await import_axios.default.post(url, payload, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  });
+  const gameId = res.data.gameDefinition?.id;
+  if (!gameId) {
+    throw new Error("Server returned success but no game ID was provided.");
+  }
+  return gameId;
+}
 async function updateGame(gameId, host, publish = false) {
   const token = getToken();
   if (!token) {
@@ -199,12 +256,23 @@ async function pushGame(gameId, host) {
     process.exit(1);
   }
 }
+var import_fs3, import_path3, import_axios;
+var init_push = __esm({
+  "src/push.ts"() {
+    "use strict";
+    import_fs3 = __toESM(require("fs"));
+    import_path3 = __toESM(require("path"));
+    import_axios = __toESM(require("axios"));
+    init_auth();
+  }
+});
 
 // src/package.ts
-var import_fs4 = __toESM(require("fs"));
-var import_path4 = __toESM(require("path"));
-var import_adm_zip = __toESM(require("adm-zip"));
-var import_axios2 = __toESM(require("axios"));
+var package_exports = {};
+__export(package_exports, {
+  packageGame: () => packageGame,
+  uploadGame: () => uploadGame
+});
 function packageGame(directory, outName) {
   const targetDir = import_path4.default.resolve(directory);
   if (!import_fs4.default.existsSync(targetDir)) {
@@ -300,23 +368,40 @@ async function uploadGame(packagePath, host) {
     process.exit(1);
   }
 }
+var import_fs4, import_path4, import_adm_zip, import_axios2;
+var init_package = __esm({
+  "src/package.ts"() {
+    "use strict";
+    import_fs4 = __toESM(require("fs"));
+    import_path4 = __toESM(require("path"));
+    import_adm_zip = __toESM(require("adm-zip"));
+    import_axios2 = __toESM(require("axios"));
+    init_auth();
+  }
+});
 
 // src/cli.ts
+var import_commander = require("commander");
 var program = new import_commander.Command();
 program.name("pandya").description("CLI and SDK for pandya.ai game authoring").version("1.0.0");
 program.command("login").description("Login to pandya.ai (or a local instance) via OAuth").option("-h, --host <url>", "The pandya instance URL", "https://pandya.ai").action(async (options) => {
-  await login(options.host);
+  const { login: login2 } = await Promise.resolve().then(() => (init_auth(), auth_exports));
+  await login2(options.host);
 });
 program.command("init").description("Scaffold a new game in the current directory").argument("[directory]", "Directory to initialize (defaults to current)", ".").action(async (directory) => {
-  await initGame(directory);
+  const { initGame: initGame2 } = await Promise.resolve().then(() => (init_init(), init_exports));
+  await initGame2(directory);
 });
 program.command("push").description("Push game assets to pandya.ai for testing (Updates Draft)").argument("<gameId>", "The ID of the game to push assets to").option("-h, --host <url>", "The pandya instance URL", "https://pandya.ai").action(async (gameId, options) => {
-  await pushGame(gameId, options.host);
+  const { pushGame: pushGame2 } = await Promise.resolve().then(() => (init_push(), push_exports));
+  await pushGame2(gameId, options.host);
 });
-program.command("package").description("Package a game directory into a .pgame archive").argument("[directory]", "Directory containing the game files", ".").option("-o, --out <filename>", "Output filename (e.g. game.pgame)").action((directory, options) => {
-  packageGame(directory, options.out);
+program.command("package").description("Package a game directory into a .pgame archive").argument("[directory]", "Directory containing the game files", ".").option("-o, --out <filename>", "Output filename (e.g. game.pgame)").action(async (directory, options) => {
+  const { packageGame: packageGame2 } = await Promise.resolve().then(() => (init_package(), package_exports));
+  packageGame2(directory, options.out);
 });
 program.command("upload").description("Upload a .pgame archive to pandya.ai (Creates a Draft game)").argument("<package>", "Path to the .pgame file").option("-h, --host <url>", "The pandya instance URL", "https://pandya.ai").action(async (pkg, options) => {
-  await uploadGame(pkg, options.host);
+  const { uploadGame: uploadGame2 } = await Promise.resolve().then(() => (init_package(), package_exports));
+  await uploadGame2(pkg, options.host);
 });
 program.parse();
