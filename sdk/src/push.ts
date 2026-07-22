@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { getToken } from './auth';
@@ -41,20 +42,30 @@ export async function updateGame(gameId: string, host: string, publish: boolean 
   const componentPath = path.join(cwd, 'component.tsx');
   const canvasPath = path.join(cwd, 'canvas.json');
 
-  if (!fs.existsSync(logicPath) || !fs.existsSync(componentPath)) {
+  // ⚡ BOLT OPTIMIZATION:
+  // Replaced synchronous `fs.existsSync` and `fs.readFileSync` with `fsPromises.readFile` and `Promise.all`
+  // to prevent blocking the event loop and to load files concurrently.
+  // We use try-catch on `readFile` to check existence without an extra syscall (avoiding a race condition).
+
+  let luaScript: string, uiComponent: string;
+  try {
+    [luaScript, uiComponent] = await Promise.all([
+      fsPromises.readFile(logicPath, 'utf-8'),
+      fsPromises.readFile(componentPath, 'utf-8')
+    ]);
+  } catch (err: any) {
     throw new Error('Missing required files. Ensure logic.lua and component.tsx exist in the current directory.');
   }
 
-  const luaScript = fs.readFileSync(logicPath, 'utf-8');
-  const uiComponent = fs.readFileSync(componentPath, 'utf-8');
-
   let gdl = undefined;
-  if (fs.existsSync(canvasPath)) {
-    try {
-      gdl = JSON.parse(fs.readFileSync(canvasPath, 'utf-8'));
-    } catch (e: any) {
+  try {
+    const canvasData = await fsPromises.readFile(canvasPath, 'utf-8');
+    gdl = JSON.parse(canvasData);
+  } catch (e: any) {
+    if (e.code !== 'ENOENT') {
       throw new Error(`Failed to parse canvas.json: ${e.message}`);
     }
+    // canvas.json is optional, ignore ENOENT
   }
 
   // Update logic and UI code
