@@ -41,17 +41,23 @@ export async function updateGame(gameId: string, host: string, publish: boolean 
   const componentPath = path.join(cwd, 'component.tsx');
   const canvasPath = path.join(cwd, 'canvas.json');
 
-  if (!fs.existsSync(logicPath) || !fs.existsSync(componentPath)) {
+  // ⚡ Bolt: Performance optimization
+  // Replaced blocking synchronous I/O with concurrent asynchronous reads.
+  // This prevents blocking the Node.js event loop and reads files in parallel for a speed boost.
+  const [luaScript, uiComponent, canvasContent] = await Promise.all([
+    fs.promises.readFile(logicPath, 'utf-8').catch(() => null),
+    fs.promises.readFile(componentPath, 'utf-8').catch(() => null),
+    fs.promises.readFile(canvasPath, 'utf-8').catch(() => null),
+  ]);
+
+  if (luaScript === null || uiComponent === null) {
     throw new Error('Missing required files. Ensure logic.lua and component.tsx exist in the current directory.');
   }
 
-  const luaScript = fs.readFileSync(logicPath, 'utf-8');
-  const uiComponent = fs.readFileSync(componentPath, 'utf-8');
-
   let gdl = undefined;
-  if (fs.existsSync(canvasPath)) {
+  if (canvasContent !== null) {
     try {
-      gdl = JSON.parse(fs.readFileSync(canvasPath, 'utf-8'));
+      gdl = JSON.parse(canvasContent);
     } catch (e: any) {
       throw new Error(`Failed to parse canvas.json: ${e.message}`);
     }
