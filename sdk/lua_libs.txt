@@ -1,0 +1,352 @@
+# Pandya.ai Comprehensive Game Authoring Guidelines
+
+Welcome to the **Pandya.ai Game Authoring Guide**. This document is a complete instruction set for LLMs and AI Assistants to develop a new multiplayer game using the Pandya.ai framework. It covers the three pillars of a game: Canvas configuration (visual layout), Lua logic (rules and state machine), and React components (frontend UI), along with MCP tools to validate everything.
+
+---
+
+## 1. Development Workflow (MCP Tools)
+
+When instructed to create a game, follow this workflow using the available MCP tools:
+
+1. **Scaffold the Game**: Use the **`create_game`** MCP tool. (Note: It is `create_game`, *not* `scaffold_game`). This will set up the game record in the database and create the initial project files.
+2. **Define Visuals**: Write the layout, pieces, and zones in `canvas.json` (Game Definition Language).
+3. **Write Rules**: Implement the game state machine in `logic.lua`.
+4. **Build UI**: Create the React frontend in `component.tsx`.
+5. **Validate & Simulate**: 
+   - Use **`validate_logic_and_canvas`** to ensure your UI action dispatches match your Lua `get_actions` and payload parameters exactly, and validates the canvas JSON.
+   - Use **`simulate_game_logic`** to run a headless test in the Lua VM to verify that your script is free of runtime errors and functions correctly.
+   - Use **`validate_ui_components`** to verify that your React `component.tsx` renders correctly and simulates gameplay using Playwright Component Testing, ensuring no syntax errors or setup issues exist before updating the game.
+   - Use **`simulate_gameplay`** to test both the logic and the UI simultaneously in an End-to-End browser simulation against the local sandbox.
+
+---
+
+## 2. Defining Visuals (`canvas.json`)
+
+The Canvas JSON defines the physical setup of the game board. 
+
+### Structure Example
+```json
+{
+  "name": "Tic-Tac-Toe",
+  "players": {
+    "min_players": 2,
+    "max_players": 2
+  },
+  "board": {
+    "type": "BOARD_TYPE_GRID",
+    "width": 3,
+    "height": 3
+  },
+  "pieces": [
+    {
+      "id": "piece_x",
+      "name": "Player X Token",
+      "visual": { "shape": "cross", "color": "#0000ff" }
+    }
+  ],
+  "setup": {
+    "zones": [
+      {
+        "id": "main_board",
+        "layout": "grid",
+        "layoutConfig": { "rows": { "numberValue": 3 }, "cols": { "numberValue": 3 } }
+      }
+    ],
+    "entities": []
+  },
+  "variations": [
+    {
+      "id": "variant_large",
+      "name": "5x5 Board Expansion",
+      "description": "Play on a larger board.",
+      "board_config_override": {
+        "width": 5,
+        "height": 5
+      },
+      "setup": {
+        "zones": [
+          {
+            "id": "main_board_large",
+            "layout": "grid",
+            "required_variations": ["variant_large"]
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+**Key Elements (Defined in `GDL` Protobuf Schema)**:
+- **`players`**: Configuration for `min_players` and `max_players`.
+- **`pieces`**: Defines archetypes for pieces (`id` is crucial for spawning these in Lua).
+- **`setup.zones`**: Contains the physical layout areas.
+  - Valid `layout` options: `grid`, `hex_pointy`, `hex_flat`, `fan`, `stack`, `deck`, `free`.
+- **`setup.entities`**: (Optional) Initial piece instances placed in zones automatically at load.
+- **`variations`**: Allows defining game modes (like expansions) that override the base `players`, `board`, `setup`, and `pieces`. Elements can be locked to a variant using the `required_variations: ["variant_id"]` string array.
+
+### Implementing Graph or Node-Based Boards (e.g. Dash-guti, Alquerque, Nine Men's Morris)
+For games with non-standard graph topologies (interconnected nodes and lines, like an hourglass shape):
+1. **Canvas Serialization (`layout: "free"`)**: Set the zone's layout to `free`. Standard grid math won't apply. You MUST encode the node coordinates and connections using the top-level `board.paths` array in the GDL. Each `BoardPath` should represent an edge or line segment between coordinates. This ensures the generic visualizer can automatically draw the graph natively.
+2. **Dynamic Lua Validation**: Do not hardcode adjacency maps! Instead, leverage the injected `paths` API. In `on_move`, validate if a target node is reachable by checking if it exists adjacent to the source node along any of the defined paths (e.g., using `paths.get_nodes(path_id)` or `paths.advance(path_id, cell, 1)`).
+3. **UI Rendering**: In your React component, map your node IDs to specific `x, y` pixel coordinates on the canvas. Use `react-konva` primitives (`<Line>`, `<Circle>`) to manually draw the web of connections based on the `board.paths` data, and render the `<Token />` components absolutely positioned at those `(x, y)` coordinates.
+
+---
+
+## 3. Game Logic (`logic.lua`)
+
+The Lua script controls rules, validations, state transitions, and win conditions. It executes in a sandboxed Go-Lua VM.
+
+### Available APIs
+The Lua environment has access to the game context (`ctx`), `game`, `paths`, and piece APIs, providing the following capabilities:
+
+- **`ctx.state`**: Access and mutate the board state. E.g., `ctx.state.get_zone("zone_id")`, `ctx.state.get_piece("piece_id")`, `ctx.state.add_piece(piece)`.
+- **`ctx.state.vars`**: Access or mutate global game variables. E.g., `ctx.state.vars.current_turn`.
+- **`ctx.random`**: Deterministic PRNG for dice rolls (`ctx.random.roll(min, max)`) and shuffling.
+- **`ctx.current_player`**: Identify whose turn it currently is.
+- **`ctx.log`**: Structured logging for debugging game logic.
+- **`ctx.end_turn()`**: End the current player's turn natively.
+
+**Advanced Mechanics (`game` API & State Redaction):**
+- **`game.get_variation("id")`**: Check if a specific game variant is active.
+- **`game.queue_action(player_index, move)`**: Queue deferred or simultaneous actions.
+- **`game.execute_queue()`**: Resolve all queued actions in round-robin order.
+- **`game.set_current_player(player_index)`**: Mutate the standard turn order (e.g., skip, reverse).
+- **`piece.set_attr(piece_id, "hidden", true)`**: Redact piece position/properties from opponents (native Fog of War).
+
+**Paths API (`paths`):**
+- **`paths.advance(path_id, cell, steps)`**: Advance a piece along a predefined GDL path.
+- **`paths.get_nodes(path_id)`**: Returns all cell coordinates in a path array.
+- **`paths.get_node(path_id, index)`**: Get the coordinate string at a 1-based index.
+- **`paths.get_index(path_id, cell)`**: Returns the 1-based index of a specific cell coordinate in the path.
+
+*Tip: Use the `get_lua_libraries` MCP tool to fetch the full `INTERNAL_ENGINE.md` reference.*
+
+```lua
+-- 1. Initialize variables and starting state
+function on_setup(ctx)
+    ctx.state.vars.current_turn = "player_1"
+    ctx.state.vars.moves_made = 0
+end
+
+-- 2. Define allowed action strings sent from the UI
+function get_actions(ctx)
+    return { "place_piece" }
+end
+
+-- 3. Process an incoming move from the frontend
+function on_move(ctx, move)
+    -- move payload structure comes from React's onMove function
+    if move.action_id == "place_piece" then
+        if ctx.state.vars.current_turn ~= move.player_id then
+            error("Not your turn!")
+        end
+        
+        local cell_idx = move.args.cell_index
+        local template_id = move.player_id == "player_1" and "piece_x" or "piece_o"
+        
+        -- Place piece
+        ctx.state.get_zone("main_board").add_piece({
+            template_id = template_id,
+            cell_index = cell_idx
+        })
+        
+        -- Update State
+        ctx.state.vars.moves_made = ctx.state.vars.moves_made + 1
+        ctx.state.vars.current_turn = (move.player_id == "player_1") and "player_2" or "player_1"
+    else
+        error("Unknown action: " .. move.action_id)
+    end
+end
+
+-- 4. Check for terminal states (Win/Loss/Draw)
+function check_win_condition(ctx)
+    if ctx.state.vars.moves_made == 9 then
+        return { is_draw = true } -- Return nil if the game should continue
+    end
+    return nil
+end
+```
+
+---
+
+## 4. Frontend User Interface (`component.tsx`)
+
+The UI agent generates a React Component for the game board, utilizing Konva.
+
+### Important Rules
+1. **Action ID Alignment**: Ensure `onMove(actionId, payload)` uses an ID explicitly listed in your Lua `get_actions` array.
+2. **Flat Payloads & snake_case**: Payload parameters must be flat and use `snake_case` (e.g., `cell_index`, not `cellIndex`). Do not wrap them inside a nested `payload:` object.
+3. **Safe Access**: Use optional chaining (e.g., `piece.template?.visual?.color`) to prevent crashes.
+4. **Memoization**: Wrap calculations in `useMemo` to keep `react-konva` renders smooth.
+5. **Explicit Text Colors**: Whenever explicitly setting `backgroundColor` or `background` on an element, you must ALWAYS explicitly define the `color` property (e.g., `color: '#1e293b'`). This prevents invisible text if the host application's dark mode sets the default inherited text color to white.
+6. **Board Orientation**: Whether using a built-in grid or a custom SVG/free layout, you MUST orient the board so the viewing player's pieces are at the BOTTOM of the screen. Apply CSS transforms (e.g., `transform: rotate(...)`) to the root board element based on `currentPlayerId`. You MUST ONLY apply rotation if `!gameState.disableRotation` is true.
+
+### Available React Primitives
+You have access to a rich library of pre-built React components in `ui/src/game-components`. This is the exhaustive list of available components you can import:
+
+- **Boards & Layouts**: `<ModularBoard />`, `<HexBoard />`, `<PlayerMat />`
+- **Cards & Decks**: `<Card />`, `<PlayingCard />`, `<PlayingCardHand />`, `<CardStack />`, `<Deck />`, `<StandardDeck />`
+- **Pieces & Entities**: `<Pawn />`, `<Token />`, `<Dice />`, `<Tile />`, `<HexTile />`
+- **Mechanics & Tracks**: `<Rondel />`, `<Track />`, `<MarketTrack />`, `<TechTree />`, `<Spinner />`
+
+### Component Example
+
+```tsx
+import React, { useMemo } from "react";
+import { GameState, MovePayload } from "@/proto/game/v1/game_pb";
+import { ModularBoard, Token } from "@/game-components";
+
+interface GameBoardProps {
+  state: GameState;
+  onMove: (actionId: string, payload: MovePayload) => void;
+  playerId: string;
+}
+
+export const CustomGameBoard: React.FC<GameBoardProps> = ({ state, onMove, playerId }) => {
+  const mainBoard = useMemo(() => state.zones.find(z => z.id === "main_board"), [state]);
+
+  const handleCellClick = (cellIndex: number) => {
+    // Contract alignment: Action ID matches Lua, args are flat and snake_case
+    onMove("place_piece", {
+      actionId: "place_piece",
+      args: { cell_index: cellIndex }
+    });
+  };
+
+  if (!mainBoard) return null;
+
+  return (
+    <div className="game-container" style={{ width: '100%', height: '100vh', display: 'flex' }}>
+      <ModularBoard 
+        zone={mainBoard} 
+        onCellClick={handleCellClick}
+        renderPiece={(piece) => (
+           <Token 
+             key={piece.id} 
+             color={piece.template?.visual?.color} // Safe optional chaining
+             shape={piece.template?.visual?.shape} 
+           />
+        )}
+      />
+    </div>
+  );
+};
+```
+
+
+# Contents of INTERNAL_ENGINE.md
+
+# Internal Game Engine Design
+
+The pandya.ai platform features a custom-built, turn-based game engine in Go. While built natively for performance, the engine's core logic is highly extensible through a **Lua-based scripting environment**.
+
+## 🏗️ Core Architecture
+
+The engine resides in `internal/engine/` and functions as a deterministic state machine. It handles network synchronization, player turns, and state persistence, while delegating specific game rules to a **Lua VM**.
+
+### Key Components
+
+| Component | Description |
+| :--- | :--- |
+| **`GameDefinition`** | The complete bundle of a game, containing **Canvas JSON** (visuals) and **Lua Script** (logic). |
+| **`Ctx`** | The "Context" provided to Lua (current player, turn number, phase, RNG). |
+| **`State`** | The current snapshot of the game data (board, pieces, zones, variables). |
+| **`Engine`** | The Go runtime that manages the lifecycle of a session and executes Lua hooks. |
+
+## 🕹️ Lifecycle of a Move
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Go as Go GameManager / Service
+    participant LuaVM as Sandboxed Lua VM (gopher-lua)
+    participant HostAPI as Go Host API bindings
+    participant State as In-Memory State
+
+    Go->>LuaVM: Load game state variables & piece lists
+    Go->>LuaVM: Invoke on_move(ctx, move)
+    Note over LuaVM: Validate move conditions (e.g., cell distance, owner)
+    
+    rect rgb(30, 40, 60)
+        Note over LuaVM, HostAPI: Query or mutate board state via Go callbacks
+        LuaVM->>HostAPI: get_piece(piece_id)
+        HostAPI-->>LuaVM: piece properties (position, owner)
+        LuaVM->>HostAPI: move_piece(piece_id, target_cell)
+        HostAPI->>State: Update target cell state
+        HostAPI-->>LuaVM: success
+    end
+
+    LuaVM->>HostAPI: end_turn()
+    HostAPI->>State: Increment turn, swap active player index
+    
+    LuaVM-->>Go: return result (status code, error details)
+    Go->>Go: Run check_win() to update game status (WIN/DRAW/IN_PROGRESS)
+```
+
+1.  **Request**: A player sends a `MakeMove` RPC with an `actionId` and arguments (e.g., `from`, `to`, `pieceId`).
+2.  **Lua Execution**: The engine calls the `on_move(ctx, move)` function within the game's Lua script.
+3.  **Validation**: Inside `on_move`, the script validates the move against game rules (e.g., "Is the path clear?").
+4.  **State Mutation**: If valid, the Lua script mutates the game state directly.
+5.  **Hooks**: The engine automatically triggers Lua hooks like `on_turn_end`, `on_phase_change`, or `check_win_condition`.
+6.  **Broadcast**: The updated state is serialized and streamed to all connected clients via ConnectRPC.
+
+## 📜 Scripting with Lua
+
+Defining a game no longer requires recompiling the Go backend. Instead, the engine provides a rich API to Lua scripts:
+
+- **`ctx.state`**: Access and mutate the board state. E.g., `ctx.state.get_zone("zone_id")`, `ctx.state.get_piece("piece_id")`, `ctx.state.add_piece(piece)`.
+- **`ctx.state.vars`**: Access or mutate global game variables. E.g., `ctx.state.vars.current_turn`.
+- **`ctx.random`**: Deterministic PRNG for dice rolls (`ctx.random.roll(min, max)`) and shuffling.
+- **`ctx.current_player`**: Identify whose turn it currently is.
+- **`ctx.log`**: Structured logging for debugging game logic.
+- **`ctx.end_turn()`**: End the current player's turn natively.
+
+### Advanced Mechanics API
+- **Variations**: Check if a specific game variant is active via `game.get_variation("variant_id")`.
+- **Programmed Movement**: Use `game.queue_action(player_index, move)` and `game.execute_queue()` to support deferred or simultaneous execution.
+- **Turn Mutations**: Explicitly alter the standard round-robin rotation via `game.set_current_player(player_index)`.
+
+### Example Lua Hook (Move)
+```lua
+function on_move(ctx, move)
+    if move.action_id == "move_piece" then
+        local piece = ctx.state.get_piece(move.piece_id)
+        -- Validation logic...
+        piece.position = move.to
+        ctx.end_turn()
+    end
+end
+```
+
+## 🔒 State Visibility & Redaction
+
+To support "fog of war" or hidden information (like cards in Poker, or hidden unit movement), the engine uses a `PlayerView` mechanism. 
+
+- **Property-based Redaction**: Simply set a piece's property via `piece.set_attr(piece_id, "hidden", true)`. The Engine will automatically redact the `position` of this piece for all opponents, providing native Hidden Movement support.
+- **Scripted Filtering**: Before broadcasting state, it can run a Lua script to redact sensitive fields based on the recipient's `player_id`.
+
+## ⚡ Interrupts & Reactions
+The engine natively supports out-of-turn play via the `Interrupt` flag on action definitions. By setting `interrupt: true`, the standard "not your turn" engine check is bypassed, enabling Magic: The Gathering style reaction instances or counter-spells.
+
+## 🧩 Custom Games (Game Authoring)
+
+The **Game Author Service** (`internal/gameauthor`) bridges the gap between the visual canvas and the logic engine:
+1.  **Canvas JSON**: Defines zones, layouts (Grid, Hex, Deck), and piece templates.
+2.  **Logic Generation**: AI agents translate natural language rules into the imperative Lua script described above.
+3.  **Dynamic Loading**: When a game starts, the engine loads the Canvas and Script dynamically, allowing for infinite game variety without server restarts.
+
+### Validation & Simulation
+To ensure that authored games are safe to run and functionally correct, the engine provides built-in validation accessible via the MCP server:
+- **Static Validation (`validate_logic_and_canvas`)**: Uses the backend `GenerationValidator` to statically check the UI React code against the Lua contract. It asserts that all `actionId` strings dispatched from the React client exist in the Lua `get_actions()` block, and that payloads are flat.
+- **Headless Simulation (`simulate_game_logic`)**: Runs an automated, mock multi-turn loop inside the `luaengine` Sandbox. This verifies that the Lua script compiles, executes without runtime exceptions, correctly handles `on_setup` piece placements, and successfully processes `on_move` events.
+- **UI Component Testing (`validate_ui_components`)**: Compiles and mounts the `component.tsx` using Playwright Component Testing. It requires a `component_code` and a Playwright `test_code` string. This checks for syntax/compile errors, verifies the component mounts properly with the given setup, and simulates simulated gameplay (clicks and UI interactions) with visualization capabilities via Playwright traces.
+- **End-to-End Sandbox Simulation (`simulate_gameplay`)**: Runs a full headless browser test against the live developer sandbox (`/author/:gameId`). It takes `component_code`, `logic_script`, `canvas_json`, and a Playwright test snippet. The tool creates a temporary game, logs into the sandbox, and executes your clicks. This seamlessly validates that clicking the UI correctly interacts with the real backend Lua logic.
+
+### Paths API
+The `paths` API is injected by the Host into the Lua VM to interact with predefined path configurations from the GDL canvas.
+- `paths.advance(path_id, current_cell, steps)`: Advances `steps` nodes along a given `path_id` starting from `current_cell`. If `current_cell` is not on the path, it returns `current_cell`. If it reaches the end of the path, it returns the final node.
+- `paths.get_nodes(path_id)`: Returns an array of cell coordinates representing the path.
+- `paths.get_node(path_id, index)`: Returns the cell coordinate string (e.g. `"x,y"`) at the given 1-based `index` in the path. Returns `nil` if the index is out of bounds or the path does not exist. This is useful for fetching starting or physical locations without hardcoding arrays in Lua.
+- `paths.get_index(path_id, cell)`: Returns the 1-based index of the `cell` string in the path. Returns `0` if the cell is not found on the path.
+

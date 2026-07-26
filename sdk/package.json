@@ -1,0 +1,35 @@
+{
+  "name": "@pandya/sdk",
+  "version": "1.0.0",
+  "description": "Pandya AI Game SDK and CLI",
+  "main": "dist/cli.js",
+  "scripts": {
+    "start": "node dist/cli.js"
+  },
+  "keywords": [
+    "pandya",
+    "sdk",
+    "game-engine"
+  ],
+  "author": "pandya.ai",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "adm-zip": "^0.5.17",
+    "axios": "^1.18.0",
+    "commander": "^15.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "open": "^11.0.0"
+  },
+  "bin": {
+    "pandya": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "PANDYA_INSTRUCTIONS.md",
+    "guidelines.json",
+    "lua_libs.json"
+  ]
+}
