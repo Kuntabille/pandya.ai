@@ -1,6 +1,6 @@
 {
   "name": "@pandya/sdk",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Pandya AI Game SDK and CLI",
   "main": "dist/cli.js",
   "scripts": {
