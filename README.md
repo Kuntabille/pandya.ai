@@ -87,13 +87,16 @@ claude mcp add pandya --url https://pandya.ai/mcp/sse
 
 ## 🛠 Available MCP Tools
 Once installed, your AI agent will have access to the following server-side tools:
-- `validate_game_code`: Statically validates that the React components and Lua scripts match contracts.
-- `simulate_game_logic`: Runs the Lua VM headlessly to check for runtime errors.
-- `get_lua_libraries`: Returns available Lua hooks.
-- `get_ui_components`: Returns available React primitives.
+- `create_game`: Scaffolds a new pandya.ai draft game (canvas.json, logic.lua, INSTRUCTIONS.md) from a name and description.
 - `get_authoring_guidelines`: Retrieves the comprehensive system prompts for generating the Canvas JSON, Lua Logic, and React UI.
-- `scaffold_game`: Scaffolds a new pandya.ai game in the specified directory.
-- `update_game`: Updates an existing pandya.ai game's local files in the specified directory.
+- `get_lua_libraries`: Returns the Lua engine reference (hooks, APIs, guidelines).
+- `get_ui_components`: Returns the available React UI primitives and GDL Theme Catalog presets.
+- `validate_logic_and_canvas`: Statically validates the Lua script and canvas.json against engine contracts.
+- `simulate_game_logic`: Runs the Lua VM headlessly to check for runtime errors.
+- `simulate_gameplay`: Runs an end-to-end browser simulation of UI + logic.
+- `update_game`: Updates an existing pandya.ai game's content (canvas.json, logic.lua, INSTRUCTIONS.md) by `game_id`.
+- `get_game`: Fetches an existing game's content by `game_id`.
+- `get_playtest_logs`: Fetches execution logs for a live playtest session.
 
 ## 🔐 Authenticating with Pandya for MCP Usage
 To use the MCP tools, your AI assistant needs to authenticate with the Pandya website. We use specific MCP Tokens to grant strict, rate-limited access to the `/mcp/sse` endpoints.
@@ -118,13 +121,13 @@ If you wish to remove or disable the Pandya MCP tools:
 
 If you have installed the Pandya CLI/SDK globally via npm, you can uninstall it by running:
 ```bash
-npm uninstall -g pandya
+npm uninstall -g @pandya/sdk
 ```
 If you installed it as a project dependency, remove it from your project:
 ```bash
-npm uninstall pandya
+npm uninstall @pandya/sdk
 # or
-yarn remove pandya
+yarn remove @pandya/sdk
 ```
 
 Enjoy building your games autonomously on Pandya!
