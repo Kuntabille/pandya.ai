@@ -46,8 +46,6 @@ This generates the two core files that define your game:
 
 The platform also expects a third file that this CLI does **not** scaffold: `INSTRUCTIONS.md`, the player-facing "How to Play" manual. Write it as part of authoring (the MCP `create_game` tool does scaffold it), otherwise your game ships with no rules page.
 
-`pandya init` additionally drops a `component.tsx` stub in the directory. That file is vestigial: the platform has no per-game React component and does not read it. The CLI's `push`, `package` and `upload` still refuse to run if the file is missing, so leave the stub where it is rather than authoring it or deleting it.
-
 ### Developing & Testing
 
 Write your game rules in `logic.lua` and your board layout in `canvas.json`. When you are ready to test, push the code to a Draft Game ID (obtained from the pandya.ai Developer Console):
@@ -68,7 +66,7 @@ The SDK can bundle a finished game directory into a shareable archive, or upload
 pandya package . --out my-game.pgame
 ```
 
-This creates a `.pgame` archive containing the game's `canvas.json` and `logic.lua`, plus the vestigial `component.tsx` stub. Set `--out <filename>` to choose where the archive is written.
+This creates a `.pgame` archive containing the game's `canvas.json` and `logic.lua`. Set `--out <filename>` to choose where the archive is written.
 
 ### Uploading a Game
 
