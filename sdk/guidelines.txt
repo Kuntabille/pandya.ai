@@ -151,7 +151,7 @@ The Lua environment has access to the game context (`ctx`), `game`, `paths`, and
 - **`paths.get_node(path_id, index)`**: Get the coordinate string at a 1-based index.
 - **`paths.get_index(path_id, cell)`**: Returns the 1-based index of a specific cell coordinate in the path.
 
-*Tip: Use the `get_lua_libraries` MCP tool to fetch the full `INTERNAL_ENGINE.md` reference.*
+*Tip: Use the `get_lua_libraries` MCP tool to fetch the full engine reference.*
 
 ```lua
 -- 1. Initialize variables and starting state
@@ -203,13 +203,13 @@ end
 
 ## 4. Engine Reference
 
-For how the Go engine executes Lua game logic (hooks, state redaction, interrupts, paths API, and the built-in validation/simulation tools), see [`INTERNAL_ENGINE.md`](INTERNAL_ENGINE.md). Use the `get_lua_libraries` MCP tool to fetch it programmatically.
+For how the engine executes Lua game logic (hooks, state redaction, interrupts, paths API, and the built-in validation/simulation tools), call the `get_lua_libraries` MCP tool.
 
 ## 5. End-to-End Validation Standards
 
-When adding or modifying a game, you MUST verify the entire data, logic, and action pipeline. The system enforces strict validation checks (`internal/gameauthor/validator.go`) that all authored code must satisfy:
+When adding or modifying a game, you MUST verify the entire data, logic, and action pipeline. The system enforces strict validation checks that all authored code must satisfy:
 
-1. **Structural Integrity**: All serialization paths (Go structs like `UIPiece`, `UIGameState`) must preserve all required data fields (e.g., `properties`, `variables`). NEVER strip metadata needed by UI components during the translation from Lua engine to JSON.
+1. **Structural Integrity**: All serialization paths must preserve every field the renderer needs (e.g. `properties`, `variables`). NEVER strip metadata during the translation from the Lua engine to JSON.
 2. **Action Mapping & Consistency**: The action ids declared in the `actions` list of `canvas.json` must match those returned by the Lua `get_actions()` block, and `on_move` must handle every one of them. The static validator extracts the ids from `get_actions()` and asserts the GDL list agrees.
 3. **Simulation Verification**: Game logic (Lua) is verified via simulated gameplay. The script must execute without errors, and pieces must be actively placed or moved.
 4. **Flat Payload Structure**: Custom moves must pass parameters as flat dictionaries. Do not wrap parameters under a nested `payload:` object.

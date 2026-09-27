@@ -1,10 +1,10 @@
-# Internal Game Engine Design
+# Game Engine Reference
 
 The pandya.ai platform features a custom-built, turn-based game engine in Go. While built natively for performance, the engine's core logic is highly extensible through a **Lua-based scripting environment**.
 
 ## 🏗️ Core Architecture
 
-The engine resides in `internal/engine/` and functions as a deterministic state machine. It handles network synchronization, player turns, and state persistence, while delegating specific game rules to a **Lua VM**.
+The engine is a deterministic state machine. It handles network synchronization, player turns, and state persistence, while delegating specific game rules to a **Lua VM**.
 
 ### Key Components
 
@@ -97,7 +97,7 @@ At the Go level, `engine.ApplyMove` returns the sentinel `engine.ErrNotYourTurn`
 
 ## 🧩 Custom Games (Game Authoring)
 
-The **Game Author Service** (`internal/gameauthor`) bridges the gap between the visual canvas and the logic engine:
+The game authoring service bridges the gap between the visual canvas and the logic engine:
 1.  **Canvas JSON**: Defines zones, layouts (Grid, Hex, Deck), and piece templates.
 2.  **Logic Generation**: AI agents translate natural language rules into the imperative Lua script described above.
 3.  **Dynamic Loading**: When a game starts, the engine loads the Canvas and Script dynamically, allowing for infinite game variety without server restarts.
@@ -120,8 +120,8 @@ You can generate this document automatically during game compilation or edit it 
 
 ### Validation & Simulation
 To ensure that authored games are safe to run and functionally correct, the engine provides built-in validation accessible via the MCP server:
-- **Static Validation (`validate_logic_and_canvas`)**: Uses the backend `GenerationValidator` to statically check the Lua contract. It takes `lua_script` and `canvas_json`, and asserts that the action ids declared in the canvas GDL `actions` list match those in the Lua `get_actions()` block, and that payloads are flat.
-- **Headless Simulation (`simulate_game_logic`)**: Runs an automated, mock multi-turn loop inside the `luaengine` Sandbox. This verifies that the Lua script compiles, executes without runtime exceptions, correctly handles `on_setup` piece placements, and successfully processes `on_move` events. The simulator executes end-turn button actions so turns actually progress, and it suppresses expected crossturn `ErrNotYourTurn` probe failures so the acting player's genuine errors surface — e.g. an `Unknown card type` warning instead of a misleading "not your turn".
+- **Static Validation (`validate_logic_and_canvas`)**: Statically checks the Lua contract before anything is published. It takes `lua_script` and `canvas_json`, and asserts that the action ids declared in the canvas GDL `actions` list match those in the Lua `get_actions()` block, and that payloads are flat.
+- **Headless Simulation (`simulate_game_logic`)**: Runs an automated, mock multi-turn loop inside the engine sandbox. This verifies that the Lua script compiles, executes without runtime exceptions, correctly handles `on_setup` piece placements, and successfully processes `on_move` events. The simulator executes end-turn button actions so turns actually progress, and it suppresses expected crossturn `ErrNotYourTurn` probe failures so the acting player's genuine errors surface — e.g. an `Unknown card type` warning instead of a misleading "not your turn".
 - **End-to-End Sandbox Simulation (`simulate_gameplay`)**: Runs a full headless browser test against the live developer sandbox (`/author/:gameId`). It takes `logic_script`, `canvas_json`, and a Playwright `test_code` snippet. The tool creates a temporary game, logs into the sandbox, and executes your clicks. This seamlessly validates that clicking the board correctly interacts with the real backend Lua logic.
 - **Instructions Generation (`generate_instructions`)**: Auto-generates a friendly player-facing `INSTRUCTIONS.md` "How to Play" manual (with an embedded board diagram) using the LLM or template generator based on `canvas.json`, `logic.lua`, and game metadata.
 
