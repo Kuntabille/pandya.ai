@@ -119,7 +119,6 @@ For games with non-standard graph topologies (interconnected nodes and lines, li
 ```
 
 2. **Dynamic Lua Validation**: Do not hardcode adjacency maps! Instead, leverage the injected `paths` API. In `on_move`, validate if a target node is reachable by checking if it exists adjacent to the source node along any of the defined paths (e.g., using `paths.get_nodes(path_id)` or `paths.advance(path_id, cell, 1)`).
-3. **UI Rendering**: In your React component, map your node IDs to specific `x, y` pixel coordinates on the canvas. Use `react-konva` primitives (`<Line>`, `<Circle>`) to manually draw the web of connections based on the `board.paths` data, and render the `<Token />` components absolutely positioned at those `(x, y)` coordinates.
 
 ---
 
@@ -161,14 +160,14 @@ function on_setup(ctx)
     ctx.state.vars.moves_made = 0
 end
 
--- 2. Define allowed action strings sent from the UI
+-- 2. Define the allowed action strings declared in the GDL actions list
 function get_actions(ctx)
     return { "place_piece" }
 end
 
--- 3. Process an incoming move from the frontend
+-- 3. Process an incoming move
 function on_move(ctx, move)
-    -- move payload structure comes from React's onMove function
+    -- move payload structure is defined by the GDL action
     if move.action_id == "place_piece" then
         if ctx.state.vars.current_turn ~= move.player_id then
             error("Not your turn!")
@@ -206,29 +205,17 @@ end
 
 For how the Go engine executes Lua game logic (hooks, state redaction, interrupts, paths API, and the built-in validation/simulation tools), see [`INTERNAL_ENGINE.md`](INTERNAL_ENGINE.md). Use the `get_lua_libraries` MCP tool to fetch it programmatically.
 
-## 5. End-to-End Component Integrity & Validation Standards
+## 5. End-to-End Validation Standards
 
-When adding or modifying game components, you MUST verify the entire data, logic, and action pipeline. The system enforces strict validation checks (`internal/gameauthor/validator.go`) that all generated code must satisfy:
+When adding or modifying a game, you MUST verify the entire data, logic, and action pipeline. The system enforces strict validation checks (`internal/gameauthor/validator.go`) that all authored code must satisfy:
 
-1. **Instructional Alignment**: Prompts for both Logic and UI agents must be synchronized (e.g., if UI uses a Deck, Logic must know to implement 'shuffle').
-2. **Structural Integrity**: All serialization paths (Go structs like `UIPiece`, `UIGameState`) must preserve all required data fields (e.g., `properties`, `variables`). NEVER strip metadata needed by UI components during the translation from Lua engine to JSON.
-3. **Action Mapping & Consistency**: Ensure the backend `ApplyMove` and the UI `onMove` use the same action IDs and payload structures. The validator extracts IDs from `get_actions` in Lua and asserts that all action IDs invoked by the React code are defined in the Lua script.
-4. **Simulation Verification**: Game logic (Lua) is verified via simulated gameplay. The script must execute without errors, and pieces must be actively placed or moved.
-5. **Flat Payload Structure**: Custom moves must pass parameters as flat dictionaries. Do not wrap parameters under a nested `payload:` object in the React code.
-6. **Naming Conventions**: Enforce snake_case for state fields and property accesses. Avoid PascalCase references (e.g., `.DefinitionID` or `.OwnerIndex`) which cause JSON deserialization mismatch.
-7. **Setup Variable Population**: If using `deck.draw` or `hand.add_card` rules in Lua, hand variables (e.g., `zone_hand_X`) must be populated with items during the setup phase.
-8. **Safe Visual Property Access**: Never access visual structures directly (e.g. `.visual.borderColor`); always use optional chaining (e.g. `?.visual?.borderColor`) to prevent crashes when definitions are missing or undefined.
-9. **Strict Canvas Referencing**: Any piece types, zone IDs, or piece definitions referenced in the UI code MUST be explicitly defined in the Canvas Data JSON (`canvas.json`). The static validator will reject the UI if it checks for `definitionId`s that do not exist.
-10. **Safe Array Operations**: Before calling array methods (such as `.includes()`, `.map()`, `.find()`, or `.length`) on custom game state variables (such as `eliminated`, `peeked_cards`, etc.), you MUST explicitly verify that they are valid arrays (e.g., using `Array.isArray()`) to prevent client-side runtime TypeError crashes.
-11. **Pieces From `gameState.pieces` Only**: Generated UIs must read board/reserve pieces from `gameState.pieces`. `gameState.entities` does not exist in the sandbox state and reading it renders an empty board (hard validation error).
-12. **Game End From Engine State Only**: UIs must detect wins/losses via `gameState.gameOver` + `gameState.winnerPlayerIndex` (or `winnerId`). Never read `gameState.variables.winner` etc. — engine variables leak Lua sentinel defaults (e.g. `-1`) into gameState. Conversely, Lua scripts must NOT `game.set_var("winner", ...)` or other engine-reserved names (`game_over`, `draw`, `current_player`, `turn`, `active_player`); report winners from `check_win()` only.
-13. **Root `game-container` Class**: Generated UIs must render a root element with `className="game-container"` so the E2E playtest harness can locate the board.
-14. **Action IDs in Ternaries**: Action strings assigned conditionally (e.g. `const actionId = isPlacementPhase ? 'place' : 'move';`) are validated against the Lua `get_actions` list just like inline `onMove` strings. All candidate action strings must exist in Lua.
-15. **No TailwindCSS — Use the Bundled `.pg-*` Kit or Inline Styles**: The sandbox loads NO TailwindCSS. Tailwind utility classes (`bg-slate-950`, `text-slate-100`, `grid-cols-3`, `w-80`, `rounded-2xl`, `flex flex-col`, `gap-3`, `hover:...`) are dead in the sandbox and render elements unstyled/invisible. The host injects a deterministic sandbox stylesheet (`ui/src/components/game-ui/sandboxStyles.ts`) with guaranteed classes prefixed `pg-` (`pg-container`, `pg-grid-3x3`, `pg-cell`, `pg-piece-w/b`, `pg-reserve`, `pg-title`, `pg-turn-label`, …). Prefer that kit; use inline `style={{...}}` only for extras. Tailwind utility classes are a hard validation error.
-16. **Playable Hands & Response Cards (CRITICAL)**: Every card dealt into a hand during setup or drawn during play MUST be playable and handled in `on_move`. Give every hand-visible template an explicit `card_type` property and branch on it in the play-card logic so no card yields "unknown card type". Response/defuse-only cards (e.g. a Sanjeevani-style savior consumed when a lethal card is drawn) must NOT be targetable by the general play action — the headless simulator targets every hand card with the play action, so such cards must be filterable or explicitly handled, not rejected as unplayable.
-17. **Turn Progression & Simulator Feedback (CRITICAL)**: Every game MUST expose at least one action that reliably advances the turn when legal (e.g. an explicit `endTurn` button that calls `game.end_turn()`); the simulator intentionally executes button actions to progress forced-turn games and will otherwise report a failing pass. The simulator reports the CURRENT player's real failure reason (e.g. "Unknown card type", "Not adjacent! ..."), so fix the underlying rules/canvas named by the error instead of retrying the same logic.
-
-### UI/UX Performance Rules
-1. **Concurrent Operations**: Execute parallel API calls concurrently using `Promise.all` with individual catch fallbacks instead of causing network waterfalls.
-2. **Render Memoization**: Memoize expensive computations and lookup mappings inside canvas boards (e.g., in `CustomGameBoard.tsx`) using React `useMemo` to keep `react-konva` renders smooth.
-3. **Static Imports**: Use top-of-file static ES imports rather than dynamic `import()` within components to optimize production bundling.
+1. **Structural Integrity**: All serialization paths (Go structs like `UIPiece`, `UIGameState`) must preserve all required data fields (e.g., `properties`, `variables`). NEVER strip metadata needed by UI components during the translation from Lua engine to JSON.
+2. **Action Mapping & Consistency**: The action ids declared in the `actions` list of `canvas.json` must match those returned by the Lua `get_actions()` block, and `on_move` must handle every one of them. The static validator extracts the ids from `get_actions()` and asserts the GDL list agrees.
+3. **Simulation Verification**: Game logic (Lua) is verified via simulated gameplay. The script must execute without errors, and pieces must be actively placed or moved.
+4. **Flat Payload Structure**: Custom moves must pass parameters as flat dictionaries. Do not wrap parameters under a nested `payload:` object.
+5. **Naming Conventions**: Enforce snake_case for state fields and property accesses. Avoid PascalCase references (e.g., `.DefinitionID` or `.OwnerIndex`) which cause JSON deserialization mismatch.
+6. **Setup Variable Population**: If using `deck.draw` or `hand.add_card` rules in Lua, hand variables (e.g., `zone_hand_X`) must be populated with items during the setup phase.
+7. **Strict Canvas Referencing**: Any piece type, zone id, or piece definition your Lua refers to MUST be explicitly defined in the Canvas Data JSON (`canvas.json`). The static validator rejects references to `definitionId`s that do not exist.
+8. **Report Winners From `check_win()` Only**: Lua scripts must NOT `game.set_var("winner", ...)` or any other engine-reserved name (`game_over`, `draw`, `current_player`, `turn`, `active_player`); engine variables leak Lua sentinel defaults (e.g. `-1`) downstream. Report the result from `check_win()` and nowhere else.
+9. **Playable Hands & Response Cards (CRITICAL)**: Every card dealt into a hand during setup or drawn during play MUST be playable and handled in `on_move`. Give every hand-visible template an explicit `card_type` property and branch on it in the play-card logic so no card yields "unknown card type". Response/defuse-only cards (e.g. a Sanjeevani-style savior consumed when a lethal card is drawn) must NOT be targetable by the general play action — the headless simulator targets every hand card with the play action, so such cards must be filterable or explicitly handled, not rejected as unplayable.
+10. **Turn Progression & Simulator Feedback (CRITICAL)**: Every game MUST expose at least one action that reliably advances the turn when legal (e.g. an explicit `endTurn` button that calls `game.end_turn()`); the simulator intentionally executes button actions to progress forced-turn games and will otherwise report a failing pass. The simulator reports the CURRENT player's real failure reason (e.g. "Unknown card type", "Not adjacent! ..."), so fix the underlying rules/canvas named by the error instead of retrying the same logic.
