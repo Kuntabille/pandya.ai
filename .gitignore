@@ -1,4 +1,11 @@
 node_modules/
 .DS_Store
 *.log
+
+# Local agent tooling state / credentials — never commit
+.opencode.json
+.opencode/
 .pandya-token
+
+# npm pack artifacts
+*.tgz

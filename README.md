@@ -1,45 +1,60 @@
 # Pandya Game Authoring Agent Plugin
 
-This repository provides the official AI Assistant plugin for **pandya.ai**. 
-It supplies your AI coding assistant (Gemini, Claude, Cursor, Windsurf, etc.) with the context and MCP (Model Context Protocol) tools necessary to automatically generate and validate game logic, GDL (Canvas JSON), and React UI components.
+This repository is the official AI-assistant plugin for **[pandya.ai](https://pandya.ai)**.
+It gives your AI coding assistant (Claude Code, Cursor, Gemini/Antigravity, OpenCode, Windsurf, Claude Desktop, …)
+the context and the **MCP tools** it needs to author, validate, and publish games on the platform.
+
+There is no SDK to install. Everything runs through the public MCP server plus a
+single **skill** file that teaches your assistant the authoring workflow.
 
 ---
 
-## 🚀 Installation Instructions
+## What's in here
 
-Depending on your AI coding assistant, follow the instructions below to install this plugin and connect to the Pandya backend.
-
-### 1. Google Gemini / Antigravity (AGY CLI & AGY IDE)
-Gemini natively supports Git-based plugins. You can install this plugin directly by cloning it into your global Gemini plugins directory:
-
-```bash
-# Clone this repository into your Gemini config
-git clone https://github.com/Kuntabille/pandya.ai.git ~/.gemini/config/plugins/pandya
-```
-*Restart Gemini/Antigravity after running this command. The plugin will be automatically loaded, exposing the `pandya-authoring` skill and the Pandya MCP tools.*
-
-**For Antigravity CLI (`agy`):**
-Because the plugin includes an `mcp.json` file, the MCP tools will be automatically loaded when you restart the CLI. You can also manually add it using the command:
-```bash
-agy mcp add pandya --url https://pandya.ai/mcp/sse
-```
-
-**For Antigravity IDE:**
-You can also manually configure the MCP server through the IDE settings:
-1. Open the Antigravity IDE settings (gear icon or `Cmd/Ctrl + ,`).
-2. Navigate to the **MCP Servers** section.
-3. Click to add a new server.
-4. Set the type to **SSE** and enter the URL: `https://pandya.ai/mcp/sse`.
+| Path | What it is |
+| --- | --- |
+| `skills/pandya-authoring/SKILL.md` | The game-authoring skill — the agent workflow and MCP tool usage. |
+| `npm/` | `@pandya/skill` — a Node package that installs the skill into your assistant. |
+| `mcp.json` | MCP client config pointing at `https://pandya.ai/mcp/sse`. |
+| `plugin.json` | Manifest for git-clone-based plugin loaders. |
+| `docs/` | Documentation site. |
 
 ---
 
-### 2. Claude Desktop (Anthropic)
-Claude Desktop supports standard MCP configurations. You need to add our SSE MCP server to your Claude configuration.
+## 🚀 Install
 
-1. Open your Claude Desktop configuration file:
-   - **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-2. Add the `pandya` server to the `mcpServers` object:
+### 1. Install the skill
+
+```bash
+npx @pandya/skill
+```
+
+It prompts for which assistant(s) to install into. To skip the prompt:
+
+```bash
+npx @pandya/skill install --target claude,cursor,gemini,opencode
+npx @pandya/skill install --target all --scope project
+```
+
+Targets: `claude` (Claude Code), `cursor`, `gemini` (Gemini / Antigravity), `opencode`.
+
+| Target | Installed to |
+| --- | --- |
+| Claude Code | `~/.claude/skills/pandya-authoring/SKILL.md` (or `./.claude/...` with `--scope project`) |
+| Cursor | `./.cursor/rules/pandya-authoring.mdc` |
+| Gemini / Antigravity | `~/.gemini/config/plugins/pandya/skills/pandya-authoring/SKILL.md` |
+| OpenCode | `~/.config/opencode/skills/pandya-authoring/SKILL.md` (or `./.opencode/skills/...`) |
+
+`npx @pandya/skill list` shows every target and its destination;
+`npx @pandya/skill install --help` documents the flags (`--scope`, `--dir`,
+`--force`, `--dry-run`).
+
+### 2. Connect the MCP server
+
+The skill needs the Pandya MCP server to actually create, validate, and simulate
+games. Point your assistant at the SSE endpoint `https://pandya.ai/mcp/sse`.
+
+Add this to your assistant's MCP config:
 
 ```json
 {
@@ -50,84 +65,89 @@ Claude Desktop supports standard MCP configurations. You need to add our SSE MCP
   }
 }
 ```
-3. Restart Claude Desktop. The Pandya tools will now be available (look for the hammer/tools icon).
-4. **Important Context**: To give Claude the right context, copy the contents of `skills/pandya-authoring/SKILL.md` and paste it into a Project's custom instructions, or simply attach it to your first prompt.
 
----
+Or use the per-assistant command:
 
-### 3. Cursor
-Cursor supports adding MCP servers natively through the settings UI.
-
-1. Open **Cursor Settings** -> **Features** -> **MCP Servers**.
-2. Click **+ Add new MCP server**.
-3. Configure it as follows:
-   - **Name**: `pandya`
-   - **Type**: `SSE`
-   - **URL**: `https://pandya.ai/mcp/sse`
-4. **Important Context**: Copy the contents of `skills/pandya-authoring/SKILL.md` and save it as a `.cursorrules` file in the root of your game project. This ensures Cursor knows how to use the tools effectively.
-
----
-
-### 4. Windsurf
-Windsurf supports adding MCP servers natively via its UI or config file.
-
-1. Add the MCP server in Windsurf's settings pointing to the SSE URL: `https://pandya.ai/mcp/sse`.
-2. **Important Context**: Copy the contents of `skills/pandya-authoring/SKILL.md` and save it as `.windsurfrules` (or use the Global Rules settings) so the AI agent understands the Pandya architecture.
-
----
-
-### 5. Claude Code (CLI)
-If you use Anthropic's terminal-based `claude-code`, you can configure it via the CLI:
 ```bash
+# Claude Code
 claude mcp add pandya --url https://pandya.ai/mcp/sse
+
+# Antigravity / Gemini CLI
+agy mcp add pandya --url https://pandya.ai/mcp/sse
 ```
-*You can also point it to the `mcp.json` included in this repository.*
+
+- **Cursor**: Settings → Features → MCP Servers → add an **SSE** server for `https://pandya.ai/mcp/sse`.
+- **Windsurf**: add the SSE server `https://pandya.ai/mcp/sse` in MCP settings.
+- **Claude Desktop**: add the `mcpServers` entry above to `claude_desktop_config.json` and restart.
+- **OpenCode**: add to `opencode.json`:
+  ```json
+  {
+    "mcp": {
+      "pandya": {
+        "type": "remote",
+        "url": "https://pandya.ai/mcp/sse",
+        "headers": { "Authorization": "Bearer $PANDYA_API_KEY" }
+      }
+    }
+  }
+  ```
+
+Run `npx @pandya/skill mcp` to print these snippets at any time.
+
+### Git-clone plugin loaders (Gemini / Antigravity)
+
+Some tools load plugins from a git checkout instead of npm. Clone this repo into
+the plugin directory and the skill + `mcp.json` are picked up automatically:
+
+```bash
+git clone https://github.com/Kuntabille/pandya.ai.git ~/.gemini/config/plugins/pandya
+```
+
+Restart the tool afterwards.
 
 ---
 
 ## 🛠 Available MCP Tools
-Once installed, your AI agent will have access to the following server-side tools:
-- `create_game`: Scaffolds a new pandya.ai draft game (canvas.json, logic.lua, INSTRUCTIONS.md) from a name and description.
-- `get_authoring_guidelines`: Retrieves the comprehensive system prompts for generating the Canvas JSON, Lua Logic, and React UI.
-- `get_lua_libraries`: Returns the Lua engine reference (hooks, APIs, guidelines).
-- `get_ui_components`: Returns the available React UI primitives and GDL Theme Catalog presets.
-- `validate_logic_and_canvas`: Statically validates the Lua script and canvas.json against engine contracts.
-- `simulate_game_logic`: Runs the Lua VM headlessly to check for runtime errors.
-- `simulate_gameplay`: Runs an end-to-end browser simulation of UI + logic.
-- `update_game`: Updates an existing pandya.ai game's content (canvas.json, logic.lua, INSTRUCTIONS.md) by `game_id`.
-- `get_game`: Fetches an existing game's content by `game_id`.
-- `get_playtest_logs`: Fetches execution logs for a live playtest session.
 
-## 🔐 Authenticating with Pandya for MCP Usage
-To use the MCP tools, your AI assistant needs to authenticate with the Pandya website. We use specific MCP Tokens to grant strict, rate-limited access to the `/mcp/sse` endpoints.
+Once connected, your AI agent has access to:
 
-1. **Log In**: Navigate to [pandya.ai](https://pandya.ai) in your browser and log into your account.
-2. **Navigate to Developer Settings**: Go to your **Profile / Account Settings** and find the **Developer Settings (MCP Tokens)** section.
-3. **Generate a Token**: Enter a token name (e.g., "VS Code Agent" or "Claude Desktop"), choose an expiration duration (e.g., 30 days), and click **Generate**. *Note: You must copy the raw token immediately as it will not be shown again.*
-4. **Configure Your Assistant**:
-   - **Environment Variable**: Set an environment variable (e.g., `PANDYA_API_KEY = your_raw_token_here`) in your assistant's environment settings.
-   - **Prompt-based Auth**: If the assistant prompts you for authentication during the first tool invocation, simply paste the generated token when requested.
+- `create_game` — scaffold a new pandya.ai draft game (`canvas.json`, `logic.lua`, `INSTRUCTIONS.md`) from a name and description.
+- `get_authoring_guidelines` — the comprehensive authoring prompts (Canvas / Lua rules).
+- `get_lua_libraries` — the Lua engine reference (hooks, APIs, guidelines).
+- `get_ui_components` — the React UI primitives and GDL Theme Catalog presets used by the platform renderer.
+- `validate_logic_and_canvas` — statically validate `logic.lua` and `canvas.json` against engine contracts.
+- `simulate_game_logic` — run the Lua VM headlessly to catch runtime errors.
+- `simulate_gameplay` — run an end-to-end browser simulation of UI + logic.
+- `update_game` — update an existing game's content by `game_id`.
+- `get_game` — fetch an existing game's content by `game_id`.
+- `get_playtest_logs` — fetch execution logs for a live playtest session.
 
-## 🗑️ Uninstalling / Disabling MCP
+## 🔐 Authenticating with Pandya
 
-If you wish to remove or disable the Pandya MCP tools:
-- **Gemini / Antigravity**: Delete the cloned plugin directory (`rm -rf ~/.gemini/config/plugins/pandya`). If you added the MCP manually via CLI, run `agy mcp remove pandya`. For the IDE, remove the server from the **MCP Servers** settings.
-- **Claude Desktop**: Open your `claude_desktop_config.json` file and remove the `"pandya"` entry from the `"mcpServers"` object, then restart Claude.
-- **Cursor**: Go to **Cursor Settings** -> **Features** -> **MCP Servers** and delete the `pandya` server.
-- **Windsurf**: Remove the server from your MCP Server settings.
-- **Claude Code (CLI)**: Run the command `claude mcp remove pandya`.
+MCP access is granted through a token, so your assistant can call the tools on
+your behalf.
 
-## 📦 Uninstalling the SDK
+1. **Log in** at [pandya.ai](https://pandya.ai).
+2. Go to **Profile / Account Settings → Developer Settings (MCP Tokens)**.
+3. Generate a token (name it, pick an expiry) and copy the raw value immediately — it is shown once.
+4. Provide it to your assistant:
+   - **Environment variable** `PANDYA_API_KEY` (recommended), or
+   - paste it when your assistant prompts for authentication.
 
-If you have installed the Pandya CLI/SDK globally via npm, you can uninstall it by running:
+## 🗑️ Uninstall / Disable
+
+**Remove the skill** — delete the directory it was installed to:
+
 ```bash
-npm uninstall -g @pandya/sdk
+rm -rf ~/.claude/skills/pandya-authoring
+rm -rf ~/.config/opencode/skills/pandya-authoring
+rm -rf ~/.gemini/config/plugins/pandya
+rm -rf .cursor/rules/pandya-authoring.mdc
 ```
-If you installed it as a project dependency, remove it from your project:
-```bash
-npm uninstall @pandya/sdk
-# or
-yarn remove @pandya/sdk
-```
+
+**Remove the MCP server** — `claude mcp remove pandya`, `agy mcp remove pandya`,
+or delete the `pandya` entry from your MCP config and restart.
+
+---
 
 Enjoy building your games autonomously on Pandya!

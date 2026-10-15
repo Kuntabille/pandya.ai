@@ -1,0 +1,26 @@
+{
+  "name": "@pandya/skill",
+  "version": "0.1.0",
+  "description": "Install the pandya.ai game-authoring skill into your AI coding assistant (Claude Code, Cursor, Gemini/Antigravity, OpenCode).",
+  "type": "module",
+  "bin": {
+    "pandya-skill": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "skill",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "pandya",
+    "skill",
+    "agent",
+    "mcp",
+    "game-engine"
+  ],
+  "author": "pandya.ai",
+  "license": "ISC"
+}

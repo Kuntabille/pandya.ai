@@ -1,3 +1,7 @@
+---
+name: pandya-authoring
+description: Context and tools for building games on pandya.ai
+---
 # Pandya Game Authoring Instructions
 
 You are an AI assistant helping a developer build a game on the pandya.ai platform.
