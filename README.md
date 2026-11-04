@@ -211,7 +211,8 @@ Once connected, your AI agent has access to:
 - `simulate_game_logic` — run the Lua VM headlessly to catch runtime errors.
 - `simulate_gameplay` — run an end-to-end browser simulation of UI + logic.
 - `update_game` — update a draft game's `canvas.json`, `logic.lua`, `scenarios.json` or `INSTRUCTIONS.md` by `game_id`. Validation runs on the merged state, scenarios included, so a failing scenario rejects the write.
-- `get_game` — fetch an existing game's content by `game_id`.
+- `publish_game` — validate the draft and publish it, making it playable for new matches. Publishing forks a fresh draft, so later edits never change the released version; `is_public: false` publishes unlisted.
+- `get_game` — fetch a game's content by `game_id`: the draft by default (the version `update_game` writes), `source: "published"` for the live snapshot.
 - `get_playtest_logs` — fetch execution logs for a live playtest session.
 
 ## 🔐 Authenticating with Pandya
