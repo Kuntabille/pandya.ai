@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Install · pandya.ai authoring for AI assistants</title>
+<meta name="description" content="Install the pandya.ai game-authoring skill and connect the MCP server to Claude Code, Codex, Cursor, VS Code, Gemini CLI, Antigravity, OpenCode, Windsurf, or any MCP client." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --parchment: #F6EED8;
+    --parchment-deep: #EFE0BD;
+    --washi: #FDF6E4;
+    --washi-line: #E3CC9E;
+    --ink: #3B3126;
+    --ink-soft: #5F5340;
+    --ink-muted: #76694E;
+    --wood: #B28456;
+    --wood-deep: #7C5333;
+    --amber: #C77E2E;
+    --amber-soft: rgba(199, 126, 46, 0.10);
+    --moss: #4F6B4A;
+    --border: rgba(92, 74, 54, 0.18);
+    --shadow: 0 2px 10px rgba(92, 74, 54, 0.10);
+    --radius: 10px;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+    --body: 'Alegreya', Georgia, 'Times New Roman', serif;
+    --display: 'Yeseva One', 'Alegreya', Georgia, serif;
+    --ui: 'Alegreya', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(199, 126, 46, 0.10), transparent 60%),
+      linear-gradient(180deg, var(--parchment) 0%, var(--parchment-deep) 100%);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--wood-deep); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--amber); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.site {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: blur(8px);
+    background: rgba(253, 246, 228, 0.86);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-inner { display: flex; align-items: center; gap: 16px; height: 60px; }
+  .wordmark {
+    font-family: var(--display); font-size: 20px; letter-spacing: 0.01em;
+    color: var(--ink); text-decoration: none;
+  }
+  .wordmark span { color: var(--amber); }
+  nav.site-links { margin-left: auto; display: flex; gap: 18px; font-family: var(--ui); font-size: 14px; }
+  nav.site-links a { color: var(--ink-soft); text-decoration: none; }
+  nav.site-links a:hover { color: var(--ink); }
+  @media (max-width: 720px) {
+    nav.site-links { display: none; }   /* the page is short enough to scroll; the footer keeps the links */
+  }
+
+  /* ── Hero ─────────────────────────────────────────────────────────────── */
+  .hero { padding: 72px 0 40px; }
+  .eyebrow {
+    font-family: var(--ui); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before {
+    content: ""; width: 22px; height: 1px; background: var(--amber); display: inline-block;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(34px, 5vw, 56px); line-height: 1.06;
+    margin: 18px 0 16px; max-width: 18ch;
+  }
+  .lede { font-size: clamp(17px, 2vw, 20px); color: var(--ink-soft); max-width: 62ch; margin: 0 0 28px; }
+
+  .command {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--washi); border: 1px solid var(--washi-line);
+    border-radius: 999px; padding: 8px 8px 8px 18px;
+    box-shadow: var(--shadow); max-width: 560px;
+  }
+  .command code { font-family: var(--mono); font-size: 14px; color: var(--ink); white-space: nowrap; overflow: auto; }
+  .command .prompt { color: var(--ink-muted); font-family: var(--mono); font-size: 14px; }
+  .copy {
+    margin-left: auto; flex: none;
+    font-family: var(--ui); font-size: 13px; font-weight: 600;
+    color: var(--washi); background: var(--amber);
+    border: 0; border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  .copy:hover { filter: brightness(0.95); }
+  .copy:focus-visible, .tab:focus-visible, a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 4px;
+  }
+  .copy[data-done="1"] { background: var(--moss); }
+
+  .hero-meta { margin-top: 18px; font-family: var(--ui); font-size: 14px; color: var(--ink-muted); }
+  .hero-meta a { color: var(--ink-soft); }
+
+  /* ── Client chips ─────────────────────────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 8px; }
+  .chip {
+    font-family: var(--ui); font-size: 13px; color: var(--ink-soft);
+    background: var(--washi); border: 1px solid var(--washi-line);
+    border-radius: 999px; padding: 5px 12px;
+  }
+
+  /* ── Sections ─────────────────────────────────────────────────────────── */
+  section.step { padding: 44px 0; border-top: 1px solid var(--border); }
+  .step-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+  .step-num { font-family: var(--mono); font-size: 13px; color: var(--amber); }
+  h2 { font-family: var(--display); font-weight: 400; font-size: clamp(24px, 3vw, 32px); margin: 0 0 10px; }
+  .step p { color: var(--ink-soft); margin: 0 0 18px; max-width: 70ch; }
+
+  pre {
+    margin: 0 0 14px; padding: 16px 18px; overflow: auto;
+    background: #2b2419; color: #F6EED8;
+    border-radius: var(--radius); font-family: var(--mono); font-size: 13.5px; line-height: 1.6;
+    position: relative;
+  }
+  pre .c { color: #b8a888; }
+  .pre-wrap { position: relative; }
+  .pre-wrap .copy {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(253, 246, 228, 0.14); color: var(--washi); font-weight: 500;
+  }
+  .pre-wrap .copy:hover { background: rgba(253, 246, 228, 0.24); }
+  .pre-wrap .copy[data-done="1"] { background: var(--moss); }
+
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 0 8px; }
+  table { width: 100%; min-width: 560px; border-collapse: collapse; font-family: var(--ui); font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { font-weight: 700; color: var(--ink); }
+  td { color: var(--ink-soft); }
+  td code, p code, li code {
+    font-family: var(--mono); font-size: 0.86em;
+    background: var(--amber-soft); border-radius: 3px; padding: 1px 5px;
+  }
+
+  .note {
+    border-left: 3px solid var(--amber); background: var(--amber-soft);
+    border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 0 0 18px;
+    font-family: var(--ui); font-size: 14.5px; color: var(--ink-soft);
+  }
+  .note strong { color: var(--ink); }
+
+  /* ── Tabs ─────────────────────────────────────────────────────────────── */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tab {
+    font-family: var(--ui); font-size: 14px; color: var(--ink-soft);
+    background: transparent; border: 1px solid transparent; border-radius: 999px;
+    padding: 7px 14px; cursor: pointer;
+  }
+  .tab:hover { background: var(--washi); border-color: var(--washi-line); }
+  .tab[aria-selected="true"] {
+    background: var(--washi); border-color: var(--washi-line);
+    color: var(--ink); box-shadow: var(--shadow); font-weight: 600;
+  }
+  .panel[hidden] { display: none; }
+  .panel { background: var(--washi); border: 1px solid var(--washi-line); border-radius: var(--radius); padding: 18px; }
+  .panel h3 { margin: 0 0 4px; font-family: var(--ui); font-size: 16px; }
+  .panel .where { margin: 0 0 12px; font-family: var(--ui); font-size: 13.5px; color: var(--ink-muted); }
+  .panel p { margin: 0 0 12px; font-size: 15px; }
+  .panel pre:last-child { margin-bottom: 0; }
+
+  /* ── Tools grid ───────────────────────────────────────────────────────── */
+  .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 18px; }
+  .tool {
+    background: var(--washi); border: 1px solid var(--washi-line); border-radius: var(--radius);
+    padding: 14px 16px; box-shadow: var(--shadow);
+  }
+  .tool b { display: block; font-family: var(--mono); font-size: 13px; color: var(--wood-deep); margin-bottom: 4px; }
+  .tool span { font-family: var(--ui); font-size: 14px; color: var(--ink-soft); }
+
+  details { border-top: 1px solid var(--border); padding: 14px 0; }
+  summary { cursor: pointer; font-family: var(--ui); font-weight: 600; color: var(--ink); }
+  details p, details pre { margin-top: 10px; }
+
+  footer.site {
+    border-top: 1px solid var(--border); padding: 30px 0 60px;
+    font-family: var(--ui); font-size: 14px; color: var(--ink-muted);
+    display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
+  }
+  footer.site a { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap site-inner">
+    <a class="wordmark" href="https://pandya.ai">pandya<span>.ai</span></a>
+    <nav class="site-links" aria-label="Sections">
+      <a href="#install">Install</a>
+      <a href="#connect">Connect</a>
+      <a href="#auth">Auth</a>
+      <a href="#tools">Tools</a>
+      <a href="https://github.com/Kuntabille/pandya.ai">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="wrap hero">
+    <div class="eyebrow">Authoring kit for AI assistants</div>
+    <h1>Build a playable board game from one prompt.</h1>
+    <p class="lede">
+      Two pieces, no SDK: a <strong>skill</strong> that teaches your assistant the workflow,
+      and a <strong>hosted MCP server</strong> that creates, validates, simulates and publishes
+      the game. Your assistant writes <code>canvas.json</code>, <code>logic.lua</code>,
+      <code>scenarios.json</code> and <code>INSTRUCTIONS.md</code> — the platform runs them.
+    </p>
+
+    <div class="command">
+      <span class="prompt">$</span>
+      <code id="cmd-install">npx @pandya/skill</code>
+      <button class="copy" data-copy="#cmd-install">Copy</button>
+    </div>
+
+    <p class="hero-meta">
+      Works with Claude Code · Claude Desktop · Codex · Cursor · VS Code · Gemini CLI ·
+      Antigravity · OpenCode · Windsurf · any MCP client
+    </p>
+  </div>
+
+  <!-- ── 01 install ──────────────────────────────────────────────────────── -->
+  <section class="step" id="install">
+    <div class="wrap">
+      <div class="step-head"><span class="step-num">01</span><h2>Install the skill</h2></div>
+      <p>
+        The installer drops one markdown file into your assistant's skill directory. It never
+        edits your MCP config — that is step&nbsp;02.
+      </p>
+
+      <div class="pre-wrap">
+        <pre><code><span class="c"># interactive: pick your assistant(s)</span>
+npx @pandya/skill
+
+<span class="c"># or target explicitly</span>
+npx @pandya/skill install --target claude,codex,cursor,gemini,opencode
+npx @pandya/skill install --target all --scope project</code></pre>
+        <button class="copy" data-copy>Copy</button>
+      </div>
+
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Target</th><th>Installs to</th></tr></thead>
+        <tbody>
+          <tr><td><code>claude</code></td><td><code>~/.claude/skills/pandya-authoring/SKILL.md</code></td></tr>
+          <tr><td><code>cursor</code></td><td><code>./.cursor/rules/pandya-authoring.mdc</code> (project)</td></tr>
+          <tr><td><code>gemini</code></td><td><code>~/.gemini/config/plugins/pandya/skills/pandya-authoring/</code></td></tr>
+          <tr><td><code>opencode</code></td><td><code>~/.config/opencode/skills/pandya-authoring/</code></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <div class="note">
+        <strong>Release status.</strong> The package is published as <code>@pandya/skill</code>.
+        If <code>npx</code> still reports <code>404</code>, the release is pending — install from the
+        repository instead, with no build step:
+      </div>
+
+      <div class="pre-wrap">
+        <pre><code>git clone https://github.com/Kuntabille/pandya.ai
+node pandya.ai/npm/bin/cli.js install --target claude</code></pre>
+        <button class="copy" data-copy>Copy</button>
+      </div>
+
+      <p class="hero-meta">
+        <code>npx @pandya/skill list</code> shows every target and destination ·
+        <code>npx @pandya/skill mcp</code> prints the config snippets below ·
+        <code>--dry-run</code> writes nothing.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── 02 connect ──────────────────────────────────────────────────────── -->
+  <section class="step" id="connect">
+    <div class="wrap">
+      <div class="step-head"><span class="step-num">02</span><h2>Connect the MCP server</h2></div>
+      <p>
+        One endpoint, both transports: <code>https://pandya.ai/mcp</code> (streamable HTTP).
+        SSE-only clients can use <code>https://pandya.ai/mcp/sse</code>. Pick your assistant:
+      </p>
+
+      <div class="tabs" role="tablist" aria-label="MCP client">
+        <button class="tab" role="tab" aria-selected="true" data-tab="claude-code">Claude Code</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="codex">Codex</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="cursor">Cursor</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="vscode">VS Code</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="gemini">Gemini CLI</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="antigravity">Antigravity</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="opencode">OpenCode</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="desktop">Claude Desktop</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="windsurf">Windsurf</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="stdio">stdio only</button>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="claude-code">
+        <h3>Claude Code</h3>
+        <p class="where">Run in the project where you want the tools available.</p>
+        <div class="pre-wrap"><pre><code>claude mcp add --transport http pandya https://pandya.ai/mcp
+claude mcp list        <span class="c"># pandya … connected</span></code></pre><button class="copy" data-copy>Copy</button></div>
+        <p>Project-scoped instead (written to <code>.mcp.json</code>, safe to commit):</p>
+        <div class="pre-wrap"><pre><code>{
+  "mcpServers": {
+    "pandya": { "type": "http", "url": "https://pandya.ai/mcp" }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="codex" hidden>
+        <h3>Codex CLI</h3>
+        <p class="where"><code>~/.codex/config.toml</code> (or the project's <code>.codex/config.toml</code>).</p>
+        <div class="pre-wrap"><pre><code>[mcp_servers.pandya]
+url = "https://pandya.ai/mcp"
+
+# Headless only — see Auth. Interactive runs use OAuth.
+# bearer_token_env_var = "PANDYA_API_KEY"</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="cursor" hidden>
+        <h3>Cursor</h3>
+        <p class="where">Settings → MCP → Add new MCP server (type <em>remote</em>). Or check in <code>.cursor/mcp.json</code>:</p>
+        <div class="pre-wrap"><pre><code>{
+  "mcpServers": {
+    "pandya": { "url": "https://pandya.ai/mcp" }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="vscode" hidden>
+        <h3>VS Code (Copilot agent mode)</h3>
+        <p class="where"><code>.vscode/mcp.json</code>, then <em>MCP: List Servers → start pandya</em>.</p>
+        <div class="pre-wrap"><pre><code>{
+  "servers": {
+    "pandya": { "type": "http", "url": "https://pandya.ai/mcp" }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="gemini" hidden>
+        <h3>Gemini CLI</h3>
+        <p class="where"><code>~/.gemini/settings.json</code> (or the project equivalent), then restart.</p>
+        <div class="pre-wrap"><pre><code>{
+  "mcpServers": {
+    "pandya": { "httpUrl": "https://pandya.ai/mcp" }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="antigravity" hidden>
+        <h3>Antigravity</h3>
+        <p class="where">MCP panel → add a remote server.</p>
+        <div class="pre-wrap"><pre><code>name: pandya
+url:  https://pandya.ai/mcp</code></pre><button class="copy" data-copy>Copy</button></div>
+        <p>Prefer a git-clone plugin? Clone this repository into the plugin directory and the
+          skill plus <code>mcp.json</code> are picked up on restart:</p>
+        <div class="pre-wrap"><pre><code>git clone https://github.com/Kuntabille/pandya.ai.git ~/.gemini/config/plugins/pandya</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="opencode" hidden>
+        <h3>OpenCode</h3>
+        <p class="where"><code>opencode.json</code> — note the <code>mcp.servers</code> nesting: a server placed
+          directly under <code>mcp</code> is ignored.</p>
+        <div class="pre-wrap"><pre><code>{
+  "mcp": {
+    "servers": {
+      "pandya": { "type": "remote", "url": "https://pandya.ai/mcp" }
+    }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="desktop" hidden>
+        <h3>Claude Desktop</h3>
+        <p>Settings → <strong>Connectors</strong> → <em>Add custom connector</em>. Name it
+          <code>pandya</code>, paste <code>https://pandya.ai/mcp</code>, connect and sign in.</p>
+        <p>Builds that predate Connectors only load local (stdio) servers — use the
+          <strong>stdio only</strong> tab.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="windsurf" hidden>
+        <h3>Windsurf</h3>
+        <p class="where">MCP settings, or <code>~/.codeium/windsurf/mcp_config.json</code>.</p>
+        <div class="pre-wrap"><pre><code>{
+  "mcpServers": {
+    "pandya": { "serverUrl": "https://pandya.ai/mcp" }
+  }
+}</code></pre><button class="copy" data-copy>Copy</button></div>
+      </div>
+
+      <div class="panel" role="tabpanel" data-panel="stdio" hidden>
+        <h3>Any client that only speaks stdio (Pi, Hermes, older builds)</h3>
+        <p class="where">The bridge proxies the remote server over stdio and performs the OAuth sign-in on first run.</p>
+        <div class="pre-wrap"><pre><code>npx -y mcp-remote https://pandya.ai/mcp
+
+<span class="c"># non-interactive: skip the browser, pass a bearer token</span>
+npx -y mcp-remote https://pandya.ai/mcp \
+  --header "Authorization: Bearer $PANDYA_API_KEY"</code></pre><button class="copy" data-copy>Copy</button></div>
+        <p>Point the client's <code>command</code>/<code>args</code> at that <code>npx</code> invocation; nothing else to install.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 03 verify ───────────────────────────────────────────────────────── -->
+  <section class="step" id="verify">
+    <div class="wrap">
+      <div class="step-head"><span class="step-num">03</span><h2>Prove it works</h2></div>
+      <p>
+        Ask the assistant to call <code>get_authoring_guidelines</code>. A working setup returns the
+        Canvas and Logic prompts. If the server is reported unavailable, the client did not follow
+        the OAuth challenge — check the URL and the client version.
+      </p>
+      <div class="pre-wrap"><pre><code>Use the pandya MCP server to call get_authoring_guidelines,
+then create a two-player abstract game and validate it.</code></pre><button class="copy" data-copy>Copy</button></div>
+    </div>
+  </section>
+
+  <!-- ── Auth ────────────────────────────────────────────────────────────── -->
+  <section class="step" id="auth">
+    <div class="wrap">
+      <h2>Authentication</h2>
+      <p>
+        <strong>Interactive clients need no setup.</strong> An unauthenticated request answers with a
+        <code>WWW-Authenticate</code> challenge pointing at
+        <code>https://pandya.ai/.well-known/oauth-protected-resource/mcp</code>; your assistant opens a
+        browser, you sign in, and the client keeps the grant. Review or revoke grants at
+        <strong>pandya.ai → Profile → Developer → Connected applications</strong>.
+      </p>
+      <p>
+        <strong>Non-interactive agents</strong> (CI, cron, a container) cannot complete that flow.
+        Mint a <code>pandya_mcp_…</code> token with your session and send it as a bearer token:
+      </p>
+      <div class="pre-wrap"><pre><code>curl -s https://pandya.ai/user.UserService/GenerateMCPToken \
+  -H "Authorization: Bearer $PANDYA_SESSION_JWT" \
+  -H "Content-Type: application/json" \
+  -H "Connect-Protocol-Version: 1" \
+  -d '{"name":"ci-agent","expiresInDays":90}'</code></pre><button class="copy" data-copy>Copy</button></div>
+      <p class="hero-meta">The raw token is returned once; only its hash is stored. Existing tokens keep working — new integrations should prefer OAuth.</p>
+    </div>
+  </section>
+
+  <!-- ── Tools ───────────────────────────────────────────────────────────── -->
+  <section class="step" id="tools">
+    <div class="wrap">
+      <h2>What the server gives you</h2>
+      <div class="tools">
+        <div class="tool"><b>create_game</b><span>Scaffold a draft: canvas, logic, scenarios, instructions.</span></div>
+        <div class="tool"><b>get_authoring_guidelines</b><span>The Canvas and Lua authoring prompts.</span></div>
+        <div class="tool"><b>get_lua_libraries</b><span>Every engine hook, host API and preloaded library.</span></div>
+        <div class="tool"><b>get_ui_components</b><span>Renderer primitives and theme presets.</span></div>
+        <div class="tool"><b>get_canvas_catalog</b><span>Every accepted canvas field, plus the play-frame contract.</span></div>
+        <div class="tool"><b>validate_logic_and_canvas</b><span>Contract checks, simulation, and your rule scenarios.</span></div>
+        <div class="tool"><b>simulate_game_logic</b><span>Headless random play to catch runtime errors.</span></div>
+        <div class="tool"><b>simulate_gameplay</b><span>End-to-end browser simulation of board and rules.</span></div>
+        <div class="tool"><b>update_game</b><span>Write the draft; a failing scenario rejects the write.</span></div>
+        <div class="tool"><b>get_game</b><span>Fetch a game's files by id.</span></div>
+        <div class="tool"><b>upload_asset</b><span>Moderated image upload, referenced by asset id.</span></div>
+        <div class="tool"><b>get_playtest_logs</b><span>Execution logs for a live playtest session.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Troubleshooting ─────────────────────────────────────────────────── -->
+  <section class="step" id="trouble">
+    <div class="wrap">
+      <h2>Troubleshooting</h2>
+
+      <details>
+        <summary>The client says the server is unavailable</summary>
+        <p>Check the URL is exactly <code>https://pandya.ai/mcp</code>. Then confirm the endpoint answers
+          with an auth challenge rather than a web page:</p>
+        <div class="pre-wrap"><pre><code>curl -i -X POST https://pandya.ai/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'</code></pre><button class="copy" data-copy>Copy</button></div>
+        <p>A <code>401</code> with <code>WWW-Authenticate: Bearer</code> is correct and expected.</p>
+      </details>
+
+      <details>
+        <summary><code>npx @pandya/skill</code> returns 404</summary>
+        <p>The npm release is pending. Use the clone-and-run path in step&nbsp;01, or clone the repo into
+          your plugin directory for Gemini/Antigravity.</p>
+      </details>
+
+      <details>
+        <summary>The tools exist but game validation fails</summary>
+        <p>Ask for <code>get_authoring_guidelines</code> and <code>get_canvas_catalog</code> first; they
+          carry the current contract. Then re-run <code>validate_logic_and_canvas</code> — its findings
+          are written to be actionable.</p>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap" style="display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;width:100%;">
+    <span>© pandya.ai</span>
+    <a href="https://pandya.ai">Play &amp; author</a>
+    <a href="https://pandya.ai/docs">Authoring docs</a>
+    <a href="https://github.com/Kuntabille/pandya.ai">Plugin repository</a>
+    <a href="https://github.com/Kuntabille/pandya.ai/blob/main/skills/pandya-authoring/SKILL.md">The skill</a>
+  </div>
+</footer>
+
+<script>
+  // Copy buttons: read the sibling <code> (or the element the button names).
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = btn.getAttribute('data-copy');
+      var code = target
+        ? document.querySelector(target)
+        : btn.closest('.pre-wrap').querySelector('code');
+      if (!code) return;
+      var text = code.innerText.replace(/\u00a0/g, ' ');
+      var done = function () {
+        var previous = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.setAttribute('data-done', '1');
+        setTimeout(function () {
+          btn.textContent = previous;
+          btn.removeAttribute('data-done');
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      } else {
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        sel.removeAllRanges();
+      }
+    });
+  });
+
+  // Tabs. Deep-linkable with #client-<id>; keeps one panel visible at a time.
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+
+  function select(id, focus) {
+    tabs.forEach(function (tab) {
+      var on = tab.getAttribute('data-tab') === id;
+      tab.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on && focus) tab.focus();
+    });
+    panels.forEach(function (panel) {
+      panel.hidden = panel.getAttribute('data-panel') !== id;
+    });
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      select(tab.getAttribute('data-tab'));
+    });
+  });
+
+  /^#client-/.test(location.hash) && select(location.hash.replace('#client-', ''));
+</script>
+
+</body>
+</html>
