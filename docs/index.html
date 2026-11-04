@@ -237,7 +237,7 @@
 
     <p class="hero-meta">
       Works with Claude Code · Claude Desktop · Codex · Cursor · VS Code · Gemini CLI ·
-      Antigravity · OpenCode · Windsurf · any MCP client
+      Antigravity · OpenCode · Windsurf · any MCP client — <code>@pandya.ai/skill@0.1.0</code> on npm
     </p>
   </div>
 
@@ -270,18 +270,6 @@ npx @pandya.ai/skill install --target all --scope project</code></pre>
           <tr><td><code>opencode</code></td><td><code>~/.config/opencode/skills/pandya-authoring/</code></td></tr>
         </tbody>
       </table>
-      </div>
-
-      <div class="note">
-        <strong>Release status.</strong> The package is published as <code>@pandya.ai/skill</code>.
-        If <code>npx</code> still reports <code>404</code>, the release is pending — install from the
-        repository instead, with no build step:
-      </div>
-
-      <div class="pre-wrap">
-        <pre><code>git clone https://github.com/Kuntabille/pandya.ai
-node pandya.ai/npm/bin/cli.js install --target claude</code></pre>
-        <button class="copy" data-copy>Copy</button>
       </div>
 
       <p class="hero-meta">
@@ -497,9 +485,11 @@ then create a two-player abstract game and validate it.</code></pre><button clas
       </details>
 
       <details>
-        <summary><code>npx @pandya.ai/skill</code> returns 404</summary>
-        <p>The npm release is pending. Use the clone-and-run path in step&nbsp;01, or clone the repo into
-          your plugin directory for Gemini/Antigravity.</p>
+        <summary><code>npx @pandya.ai/skill</code> fails to resolve the package</summary>
+        <p>Check the registry first: <code>npm view @pandya.ai/skill version</code> should print
+          <code>0.1.0</code> or newer. A cached <code>npx</code> can also pin an old version — run it as
+          <code>npx --yes @pandya.ai/skill@latest</code>. For Gemini/Antigravity, the git-clone plugin path
+          in step&nbsp;01 remains available.</p>
       </details>
 
       <details>
