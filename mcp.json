@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "pandya": {
-      "url": "https://pandya.ai/mcp/sse"
+      "url": "https://pandya.ai/mcp"
     }
   }
 }
