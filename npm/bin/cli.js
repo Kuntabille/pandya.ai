@@ -9,7 +9,7 @@ import os from "node:os";
 import process from "node:process";
 import * as readline from "node:readline/promises";
 
-const MCP_URL = "https://pandya.ai/mcp/sse";
+const MCP_URL = "https://pandya.ai/mcp";
 
 const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(pkgRoot, "..");
@@ -73,7 +73,7 @@ const TARGETS = {
         "pandya-authoring",
         "SKILL.md",
       ),
-    mcp: "claude mcp add pandya --url " + MCP_URL,
+    mcp: "claude mcp add --transport http pandya " + MCP_URL,
   },
   cursor: {
     label: "Cursor",
@@ -81,7 +81,7 @@ const TARGETS = {
     dest: ({ cwd }) =>
       path.join(cwd, ".cursor", "rules", "pandya-authoring.mdc"),
     transform: toCursorRule,
-    mcp: `Cursor Settings → Features → MCP Servers → add an SSE server for ${MCP_URL}`,
+    mcp: `Cursor Settings → MCP → Add new MCP server (type: remote) → ${MCP_URL}`,
   },
   gemini: {
     label: "Gemini / Antigravity",
@@ -97,7 +97,7 @@ const TARGETS = {
         "pandya-authoring",
         "SKILL.md",
       ),
-    mcp: "agy mcp add pandya --url " + MCP_URL,
+    mcp: `Antigravity → MCP settings → add a remote server named pandya → ${MCP_URL}`,
   },
   opencode: {
     label: "OpenCode",
@@ -112,7 +112,7 @@ const TARGETS = {
         "SKILL.md",
       ),
     mcp:
-      `add to opencode.json:\n  {"mcp":{"pandya":{"type":"remote","url":"${MCP_URL}","headers":{"Authorization":"Bearer $PANDYA_API_KEY"}}}}`,
+      `add to opencode.json:\n  {"mcp":{"servers":{"pandya":{"type":"remote","url":"${MCP_URL}"}}}}`,
   },
 };
 
@@ -160,9 +160,9 @@ function parseArgs(argv) {
 const HELP = `pandya-skill — install the pandya.ai game-authoring skill
 
 Usage:
-  npx @pandya/skill [install] [options]
-  npx @pandya/skill mcp [--target <list>]
-  npx @pandya/skill list
+  npx @pandya.ai/skill [install] [options]
+  npx @pandya.ai/skill mcp [--target <list>]
+  npx @pandya.ai/skill list
 
 Options:
   --target <list>   Comma-separated targets (or "all"). Skips the prompt.
@@ -301,7 +301,10 @@ function printMcpHint(targets) {
     console.log(`  ${TARGETS[key].label}: ${TARGETS[key].mcp}`);
   }
   console.log(
-    "\nAuthenticate with a PANDYA_API_KEY token from pandya.ai → Profile → Developer Settings.",
+    "\nInteractive clients authenticate with OAuth (the server advertises it; you sign in, no token to paste).",
+  );
+  console.log(
+    "Headless agents use a pandya_mcp_* token provisioned out of band, sent as: Authorization: Bearer <token>",
   );
   console.log("Run `pandya-skill mcp` for the raw config snippets.");
 }
@@ -319,9 +322,15 @@ async function cmdMcp(args) {
   for (const key of targets) {
     console.log(`  ${TARGETS[key].label}: ${TARGETS[key].mcp}`);
   }
+  console.log("\nCodex CLI (~/.codex/config.toml):");
+  console.log(`  [mcp_servers.pandya]\n  url = "${MCP_URL}"`);
+  console.log("\nAny other client that supports a remote MCP server:");
+  console.log(`  name: pandya   url: ${MCP_URL}`);
+  console.log("  (streamable HTTP; SSE-only clients can use /mcp/sse)");
   console.log(
-    "\nSet PANDYA_API_KEY (or paste the token when prompted) to authenticate.",
+    "\nInteractive clients authenticate with OAuth; headless agents use a pandya_mcp_*",
   );
+  console.log("token provisioned out of band, sent as Authorization: Bearer <token>.");
 }
 
 function cmdList() {

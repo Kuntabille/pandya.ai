@@ -17,7 +17,7 @@ below, with copy-ready config for each client.
 | Path | What it is |
 | --- | --- |
 | `skills/pandya-authoring/SKILL.md` | The game-authoring skill — the agent workflow and MCP tool usage. |
-| `npm/` | `@pandya/skill` — a Node package that installs the skill into your assistant. |
+| `npm/` | `@pandya.ai/skill` — a Node package that installs the skill into your assistant. |
 | `mcp.json` | MCP client config pointing at `https://pandya.ai/mcp`. |
 | `plugin.json` | Manifest for git-clone-based plugin loaders. |
 | `docs/` | Documentation site. |
@@ -29,14 +29,14 @@ below, with copy-ready config for each client.
 ### 1. Install the skill
 
 ```bash
-npx @pandya/skill
+npx @pandya.ai/skill
 ```
 
 It prompts for which assistant(s) to install into. To skip the prompt:
 
 ```bash
-npx @pandya/skill install --target claude,cursor,gemini,opencode
-npx @pandya/skill install --target all --scope project
+npx @pandya.ai/skill install --target claude,cursor,gemini,opencode
+npx @pandya.ai/skill install --target all --scope project
 ```
 
 Targets: `claude` (Claude Code), `cursor`, `gemini` (Gemini / Antigravity), `opencode`.
@@ -48,8 +48,8 @@ Targets: `claude` (Claude Code), `cursor`, `gemini` (Gemini / Antigravity), `ope
 | Gemini / Antigravity | `~/.gemini/config/plugins/pandya/skills/pandya-authoring/SKILL.md` |
 | OpenCode | `~/.config/opencode/skills/pandya-authoring/SKILL.md` (or `./.opencode/skills/...`) |
 
-`npx @pandya/skill list` shows every target and its destination;
-`npx @pandya/skill install --help` documents the flags (`--scope`, `--dir`,
+`npx @pandya.ai/skill list` shows every target and its destination;
+`npx @pandya.ai/skill install --help` documents the flags (`--scope`, `--dir`,
 `--force`, `--dry-run`).
 
 ### 2. Connect the MCP server
@@ -184,7 +184,7 @@ Canvas and Logic authoring prompts. If it instead reports the server as
 unavailable, the client did not follow the OAuth challenge; check the URL and
 the client version.
 
-Run `npx @pandya/skill mcp` to print these snippets at any time.
+Run `npx @pandya.ai/skill mcp` to print these snippets at any time.
 
 ### Git-clone plugin loaders (Gemini / Antigravity)
 

@@ -1,4 +1,4 @@
-# @pandya/skill
+# @pandya.ai/skill
 
 Installs the **pandya-authoring** skill into your AI coding assistant so it
 knows how to build games on [pandya.ai](https://pandya.ai) and how to use the
@@ -13,11 +13,11 @@ manual). The skill teaches your assistant that workflow and the Lua engine API.
 
 ```bash
 # Interactive: pick your assistant(s)
-npx @pandya/skill
+npx @pandya.ai/skill
 
 # Or target explicitly
-npx @pandya/skill install --target claude,cursor
-npx @pandya/skill install --target all --scope project
+npx @pandya.ai/skill install --target claude,cursor
+npx @pandya.ai/skill install --target all --scope project
 ```
 
 Supported targets: `claude` (Claude Code), `cursor`, `gemini`
@@ -33,11 +33,43 @@ Supported targets: `claude` (Claude Code), `cursor`, `gemini`
 | `--force` | Overwrite an existing skill file. |
 | `--dry-run` | Print what would be written without writing. |
 
+## Connect the MCP server
+
+The skill is only the workflow; the tools live on the Pandya MCP server.
+
+| | |
+| --- | --- |
+| Endpoint | `https://pandya.ai/mcp` (streamable HTTP) |
+| SSE-only clients | `https://pandya.ai/mcp/sse` |
+| Auth | OAuth 2.1 — interactive clients sign in through the browser, nothing to paste |
+
+```bash
+# Claude Code
+claude mcp add --transport http pandya https://pandya.ai/mcp
+
+# Codex CLI: ~/.codex/config.toml
+#   [mcp_servers.pandya]
+#   url = "https://pandya.ai/mcp"
+
+# OpenCode: opencode.json (note mcp.servers, not mcp)
+#   {"mcp":{"servers":{"pandya":{"type":"remote","url":"https://pandya.ai/mcp"}}}}
+
+# Anything that only speaks stdio (incl. Claude Desktop builds without connectors)
+npx -y mcp-remote https://pandya.ai/mcp
+```
+
+Cursor, VS Code, Gemini CLI, Antigravity, Windsurf and a non-interactive
+`Authorization: Bearer` path are documented in the plugin repository's
+[README](https://github.com/Kuntabille/pandya.ai#2-connect-the-mcp-server).
+
+Run `npx @pandya.ai/skill mcp` for the snippets, and `npx @pandya.ai/skill list` for
+where the skill is installed.
+
 ### Other commands
 
 ```bash
-npx @pandya/skill list     # show targets and default destinations
-npx @pandya/skill mcp      # print MCP server config snippets
+npx @pandya.ai/skill list     # show targets and default destinations
+npx @pandya.ai/skill mcp      # print MCP server config snippets
 ```
 
 ## Where the skill is installed
@@ -59,11 +91,11 @@ create, validate, and simulate games, connect the Pandya MCP server:
 ```
 
 Then authenticate with a token from **pandya.ai → Profile → Developer Settings**
-(`PANDYA_API_KEY`). Run `npx @pandya/skill mcp` for per-assistant commands.
+(`PANDYA_API_KEY`). Run `npx @pandya.ai/skill mcp` for per-assistant commands.
 
 ## Development & release
 
-This directory is the **source** of the published `@pandya/skill` package. The
+This directory is the **source** of the published `@pandya.ai/skill` package. The
 skill it ships is not maintained here: `npm/skill/SKILL.md` is a snapshot of the
 canonical [`skills/pandya-authoring/SKILL.md`](../../skills/pandya-authoring/SKILL.md),
 regenerated — and staleness-checked — by `make authoring-build` together with the

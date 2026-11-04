@@ -1,5 +1,5 @@
 {
-  "name": "@pandya/skill",
+  "name": "@pandya.ai/skill",
   "version": "0.1.0",
   "description": "Install the pandya.ai game-authoring skill into your AI coding assistant (Claude Code, Cursor, Gemini/Antigravity, OpenCode).",
   "type": "module",
