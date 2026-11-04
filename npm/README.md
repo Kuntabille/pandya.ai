@@ -4,8 +4,9 @@ Installs the **pandya-authoring** skill into your AI coding assistant so it
 knows how to build games on [pandya.ai](https://pandya.ai) and how to use the
 Pandya MCP tools.
 
-A pandya game is three files: `canvas.json` (the GDL board layout and `actions`
-contract), `logic.lua` (the rules), and `INSTRUCTIONS.md` (the player-facing
+A pandya game is four files: `canvas.json` (the GDL board layout and `actions`
+contract), `logic.lua` (the rules), `scenarios.json` (executable rule scenarios
+the validator runs in the real engine), and `INSTRUCTIONS.md` (the player-facing
 manual). The skill teaches your assistant that workflow and the Lua engine API.
 
 ## Usage
@@ -60,17 +61,28 @@ create, validate, and simulate games, connect the Pandya MCP server:
 Then authenticate with a token from **pandya.ai → Profile → Developer Settings**
 (`PANDYA_API_KEY`). Run `npx @pandya/skill mcp` for per-assistant commands.
 
-## Source of truth
+## Development & release
 
-This directory is a **read-only public mirror** of the published `@pandya/skill`
-package. The package is built and published from a private development
-repository; the files here (`bin/cli.js`, `package.json`, `skill/SKILL.md`,
-`README.md`) are copied from the built artifact. There are deliberately no build
-scripts and no `repository` field in the mirrored `package.json`.
+This directory is the **source** of the published `@pandya/skill` package. The
+skill it ships is not maintained here: `npm/skill/SKILL.md` is a snapshot of the
+canonical [`skills/pandya-authoring/SKILL.md`](../../skills/pandya-authoring/SKILL.md),
+regenerated — and staleness-checked — by `make authoring-build` together with the
+editor plugin copies under `plugins/`. Edit the canonical skill, then run
+`make authoring-build` to refresh every derived copy (including this snapshot).
 
-The skill text also mirrors
-[`skills/pandya-authoring/SKILL.md`](https://github.com/Kuntabille/pandya.ai/blob/main/skills/pandya-authoring/SKILL.md);
-the two are refreshed together from the same private source.
+Releases are tag-driven and run in CI; there is deliberately no local
+`npm publish` (a version on the registry cannot be unpublished and reissued, and
+CI is the only place the token lives):
+
+```bash
+# bump "version" in npm/package.json, commit, then:
+git tag skill-v0.2.0 && git push origin skill-v0.2.0
+```
+
+`.github/workflows/publish-skill.yml` verifies the tag matches the version and
+publishes with the `NPM_TOKEN` secret. The public mirror repository carries the
+built package (`bin/cli.js`, `package.json`, `README.md`, `skill/SKILL.md`) for
+transparency.
 
 ## Uninstall
 
